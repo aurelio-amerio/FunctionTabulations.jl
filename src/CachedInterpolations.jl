@@ -7,6 +7,27 @@ using Base.Threads
 
 export create_interpolation_1D, create_interpolation_2D, create_interpolation_3D
 
+
+function scaler(x::Real, scale::Symbol)
+    if scale == :linear
+        return x
+    elseif scale == :log10
+        return log10(x)
+    else
+        error("Scale <$scale> is not supported")
+    end
+end
+
+function un_scaler(x::Real, scale::Symbol)
+    if scale == :linear
+        return x
+    elseif scale == :log10
+        return 10 .^ x
+    else
+        error("Scale <$scale> is not supported")
+    end
+end
+
 function create_interpolation_1D(
     func::Function,
     args...;
@@ -15,17 +36,17 @@ function create_interpolation_1D(
     xmin::Real,
     xmax::Real,
     npoints::Int,
-    scale_x=:linear,
-    scale_f=:linear,
+    scale_x = :linear,
+    scale_f = :linear,
     extrapolation_bc = Throw,
-    kwargs...,
+    kwargs...
 )
 
     func_name = nameof(func)
 
     arg(x) = func(x, args...; kwargs...)
 
-    if isnothing(jld_base_path)  
+    if isnothing(jld_base_path)
         base_path = pwd()
     else
         base_path = jld_base_path
@@ -40,13 +61,13 @@ function create_interpolation_1D(
     else
         filename = "$(custom_name)_data.jld"
     end
-    
+
     filepath = "$(base_path)/$(filename)"
 
     function load_file()
         if isfile(filepath)
             data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax 
+            if data["xmin"] == xmin && data["xmax"] == xmax && data["npoints"] == npoints
                 return true
             else
                 return false
@@ -62,11 +83,11 @@ function create_interpolation_1D(
         x = data["x"]
 
         data_matrix = data["func"]
-        
+
     else
         if scale_x == :linear
             x = range(xmin, xmax, length = npoints)
-        elseif scale_x == :log
+        elseif scale_x == :log10
             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints)
         else
             error("X scale $scale_x not supported")
@@ -77,7 +98,7 @@ function create_interpolation_1D(
         else
             @info "Computing $(custom_name) Interpolation"
         end
-        
+
         p = Progress(Int(npoints))
         update!(p, 0)
 
@@ -103,38 +124,20 @@ function create_interpolation_1D(
 
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
+        data_dict["npoints"] = npoints
 
         save(filepath, data_dict)
         @info "$(filename) created and exported!"
     end
 
-    data_matrix[data_matrix.<1e-299] .= 1e-300
-
-    function scaler(x::Real, scale::Symbol)
-        if scale == :linear
-            return x
-        elseif scale == :log
-            return log10(x)
-        else
-            error("Scale <$scale> is not supported")
-        end
+    if scale_f == :log10
+        data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
-    function un_scaler(x::Real, scale::Symbol)
-        if scale == :linear
-            return x
-        elseif scale == :log
-            return 10 .^ x
-        else
-            error("Scale <$scale> is not supported")
-        end
-    end
-
-
-    knots = (scaler.(x, scale_x), )
+    knots = (scaler.(x, scale_x),)
     f_matrix = scaler.(data_matrix, scale_f)
 
-    itp = LinearInterpolation(knots, f_matrix , extrapolation_bc = extrapolation_bc())
+    itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
 
     function func_interp(x::Real)
         return un_scaler(itp(scaler(x, scale_x)), scale_f)::Float64
@@ -154,18 +157,18 @@ function create_interpolation_2D(
     ymax::Real,
     npoints_x::Int,
     npoints_y::Int,
-    scale_x=:linear,
-    scale_y=:linear,
-    scale_f=:linear,
+    scale_x = :linear,
+    scale_y = :linear,
+    scale_f = :linear,
     extrapolation_bc = Throw,
-    kwargs...,
+    kwargs...
 )
 
     func_name = nameof(func)
 
-    arg(x,y) = func(x, y, args...; kwargs...)
+    arg(x, y) = func(x, y, args...; kwargs...)
 
-    if isnothing(jld_base_path)  
+    if isnothing(jld_base_path)
         base_path = pwd()
     else
         base_path = jld_base_path
@@ -180,13 +183,13 @@ function create_interpolation_2D(
     else
         filename = "$(custom_name)_data.jld"
     end
-    
+
     filepath = "$(base_path)/$(filename)"
 
     function load_file()
         if isfile(filepath)
             data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax 
+            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["npoints_x"] == npoints_x && data["npoints_y"] == npoints_y
                 return true
             else
                 return false
@@ -203,11 +206,11 @@ function create_interpolation_2D(
         y = data["y"]
 
         data_matrix = data["func"]
-        
+
     else
         if scale_x == :linear
             x = range(xmin, xmax, length = npoints_x)
-        elseif scale_x == :log
+        elseif scale_x == :log10
             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints_x)
         else
             error("X scale $scale_x not supported")
@@ -215,7 +218,7 @@ function create_interpolation_2D(
 
         if scale_y == :linear
             y = range(ymin, ymax, length = npoints_y)
-        elseif scale_y == :log
+        elseif scale_y == :log10
             y = 10 .^ range(log10(ymin), log10(ymax), length = npoints_y)
         else
             error("Y scale $scale_y not supported")
@@ -226,7 +229,7 @@ function create_interpolation_2D(
         else
             @info "Computing $(custom_name) Interpolation"
         end
-        
+
         p = Progress(Int(npoints_y))
         update!(p, 0)
 
@@ -234,7 +237,7 @@ function create_interpolation_2D(
 
         @threads for j = 1:npoints_y
             for i = 1:npoints_x
-                data_matrix[i] = arg(x[i], y[j])
+                data_matrix[i, j] = arg(x[i], y[j])
             end
             next!(p)
         end
@@ -255,38 +258,21 @@ function create_interpolation_2D(
         data_dict["xmax"] = xmax
         data_dict["ymin"] = ymin
         data_dict["ymax"] = ymax
+        data_dict["npoints_x"] = npoints_x
+        data_dict["npoints_y"] = npoints_y
 
         save(filepath, data_dict)
         @info "$(filename) created and exported!"
     end
 
-    data_matrix[data_matrix.<1e-299] .= 1e-300
-
-    function scaler(x::Real, scale::Symbol)
-        if scale == :linear
-            return x
-        elseif scale == :log
-            return log10(x)
-        else
-            error("Scale <$scale> is not supported")
-        end
+    if scale_f == :log10
+        data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
-
-    function un_scaler(x::Real, scale::Symbol)
-        if scale == :linear
-            return x
-        elseif scale == :log
-            return 10 .^ x
-        else
-            error("Scale <$scale> is not supported")
-        end
-    end
-
 
     knots = (scaler.(x, scale_x), scaler.(y, scale_y))
     f_matrix = scaler.(data_matrix, scale_f)
 
-    itp = LinearInterpolation(knots, f_matrix , extrapolation_bc = extrapolation_bc())
+    itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
 
     function func_interp(x::Real, y::Real)
         return un_scaler(itp(scaler(x, scale_x), scaler(y, scale_y)), scale_f)::Float64
@@ -310,19 +296,19 @@ function create_interpolation_3D(
     npoints_x::Int,
     npoints_y::Int,
     npoints_z::Int,
-    scale_x=:linear,
-    scale_y=:linear,
-    scale_z=:linear,
-    scale_f=:linear,
+    scale_x = :linear,
+    scale_y = :linear,
+    scale_z = :linear,
+    scale_f = :linear,
     extrapolation_bc = Throw,
-    kwargs...,
+    kwargs...
 )
 
     func_name = nameof(func)
 
-    arg(x,y,z) = func(x, y, z, args...; kwargs...)
+    arg(x, y, z) = func(x, y, z, args...; kwargs...)
 
-    if isnothing(jld_base_path)  
+    if isnothing(jld_base_path)
         base_path = pwd()
     else
         base_path = jld_base_path
@@ -337,13 +323,13 @@ function create_interpolation_3D(
     else
         filename = "$(custom_name)_data.jld"
     end
-    
+
     filepath = "$(base_path)/$(filename)"
 
     function load_file()
         if isfile(filepath)
             data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["zmin"] == zmin && data["zmax"] == zmax 
+            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["zmin"] == zmin && data["zmax"] == zmax && data["npoints_x"] == npoints_x && data["npoints_y"] == npoints_y && data["npoints_z"] == npoints_z
                 return true
             else
                 return false
@@ -361,11 +347,11 @@ function create_interpolation_3D(
         z = data["z"]
 
         data_matrix = data["func"]
-        
+
     else
         if scale_x == :linear
             x = range(xmin, xmax, length = npoints_x)
-        elseif scale_x == :log
+        elseif scale_x == :log10
             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints_x)
         else
             error("X scale $scale_x not supported")
@@ -373,7 +359,7 @@ function create_interpolation_3D(
 
         if scale_y == :linear
             y = range(ymin, ymax, length = npoints_y)
-        elseif scale_y == :log
+        elseif scale_y == :log10
             y = 10 .^ range(log10(ymin), log10(ymax), length = npoints_y)
         else
             error("Y scale $scale_y not supported")
@@ -381,7 +367,7 @@ function create_interpolation_3D(
 
         if scale_z == :linear
             z = range(zmin, zmax, length = npoints_z)
-        elseif scale_z == :log
+        elseif scale_z == :log10
             z = 10 .^ range(log10(zmin), log10(zmax), length = npoints_z)
         else
             error("Z scale $scale_z not supported")
@@ -392,8 +378,8 @@ function create_interpolation_3D(
         else
             @info "Computing $(custom_name) Interpolation"
         end
-        
-        p = Progress(Int(npoints_z*npoints_y))
+
+        p = Progress(Int(npoints_z * npoints_y))
         update!(p, 0)
 
         data_matrix = zeros(npoints_x, npoints_y, npoints_z)
@@ -401,12 +387,12 @@ function create_interpolation_3D(
         @threads for k = 1:npoints_z
             for j = 1:npoints_y
                 for i = 1:npoints_x
-                    data_matrix[i] = arg(x[i], y[j], z[k])
+                    data_matrix[i, j, k] = arg(x[i], y[j], z[k])
                 end
                 next!(p)
             end
         end
-            
+
         data_dict = Dict{
             String,
             Union{
@@ -426,40 +412,24 @@ function create_interpolation_3D(
         data_dict["ymax"] = ymax
         data_dict["zmin"] = zmin
         data_dict["zmax"] = zmax
+        data_dict["npoints_x"] = npoints_x
+        data_dict["npoints_y"] = npoints_y
+        data_dict["npoints_z"] = npoints_z
 
         save(filepath, data_dict)
         @info "$(filename) created and exported!"
     end
 
-    data_matrix[data_matrix.<1e-299] .= 1e-300
-
-    function scaler(x::Real, scale::Symbol)
-        if scale == :linear
-            return x
-        elseif scale == :log
-            return log10(x)
-        else
-            error("Scale <$scale> is not supported")
-        end
+    if scale_f == :log10
+        data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
-
-    function un_scaler(x::Real, scale::Symbol)
-        if scale == :linear
-            return x
-        elseif scale == :log
-            return 10 .^ x
-        else
-            error("Scale <$scale> is not supported")
-        end
-    end
-
 
     knots = (scaler.(x, scale_x), scaler.(y, scale_y), scaler.(z, scale_z))
     f_matrix = scaler.(data_matrix, scale_f)
 
-    itp = LinearInterpolation(knots, f_matrix , extrapolation_bc = extrapolation_bc())
+    itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
 
-    function func_interp(x::Real, y::Real)
+    function func_interp(x::Real, y::Real, z::Real)
         return un_scaler(itp(scaler(x, scale_x), scaler(y, scale_y), scaler.(z, scale_z)), scale_f)::Float64
     end
 
@@ -499,7 +469,7 @@ end
 #     else
 #         filename = "$(custom_name)_data.jld"
 #     end
-    
+
 #     filepath = "$(base_path)/$(filename)"
 
 #     function load_file()
@@ -525,7 +495,7 @@ end
 #     else
 #         if scale_x == :linear
 #             x = range(xmin, xmax, length = npoints)
-#         elseif scale_x == :log
+#         elseif scale_x == :log10
 #             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints)
 #         else
 #             error("X scale $scale_x not supported")
@@ -536,7 +506,7 @@ end
 #         else
 #             @info "Computing $(custom_name) Interpolation"
 #         end
-        
+
 #         p = Progress(Int(npoints))
 #         update!(p, 0)
 
@@ -572,7 +542,7 @@ end
 #     function scaler(x::Real, scale::Symbol)
 #         if scale == :linear
 #             return x
-#         elseif scale == :log
+#         elseif scale == :log10
 #             return log10(x)
 #         else
 #             error("Scale <$scale> is not supported")
@@ -582,7 +552,7 @@ end
 #     function un_scaler(x::Real, scale::Symbol)
 #         if scale == :linear
 #             return x
-#         elseif scale == :log
+#         elseif scale == :log10
 #             return 10 .^ x
 #         else
 #             error("Scale <$scale> is not supported")
