@@ -1,4 +1,4 @@
-module CachedInterpolations
+module Tabulations
 using Interpolations
 using JLD2
 using ProgressMeter
@@ -438,7 +438,7 @@ function create_interpolation_3D_no_units(
         data_dict["npoints_y"] = npoints_y
         data_dict["npoints_z"] = npoints_z
 
-        save(filepath, data_dict)
+        save(filepath, data_dict, compress = true)
         @info "$(filename) created and exported!"
     end
 
