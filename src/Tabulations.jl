@@ -6,7 +6,7 @@ using Unitful
 using Unitful: FreeUnits
 using Base.Threads
 
-export create_interpolation_1D, create_interpolation_2D, create_interpolation_3D
+export create_tabulation_1D, create_tabulation_2D, create_tabulation_3D
 
 # get_unit_annotation(x::Union{Quantity,FreeUnits}) = Quantity{T,dimension(x),W} where {T<:Real,W<:FreeUnits}
 
@@ -31,7 +31,7 @@ function un_scaler(x::Real, scale::Symbol)
     end
 end
 
-function create_interpolation_1D_no_units(
+function create_tabulation_1D_no_units(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -39,8 +39,8 @@ function create_interpolation_1D_no_units(
     xmin::Real,
     xmax::Real,
     npoints::Int,
-    scale_x = :linear,
-    scale_f = :linear,
+    x_scale = :linear,
+    f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -89,12 +89,12 @@ function create_interpolation_1D_no_units(
         data_matrix = data["func"]
 
     else
-        if scale_x == :linear
+        if x_scale == :linear
             x = range(xmin, xmax, length = npoints)
-        elseif scale_x == :log10
+        elseif x_scale == :log10
             x = range(log10(xmin), log10(xmax), length = npoints)
         else
-            throw(ArgumentError("X scale $scale_x not supported"))
+            throw(ArgumentError("X scale $x_scale not supported"))
         end
 
         if isnothing(custom_name)
@@ -110,7 +110,7 @@ function create_interpolation_1D_no_units(
 
         @threads for i = 1:npoints
 
-            data_matrix[i] = arg(un_scaler(x[i], scale_x))
+            data_matrix[i] = arg(un_scaler(x[i], x_scale))
 
             next!(p)
         end
@@ -135,12 +135,12 @@ function create_interpolation_1D_no_units(
         @info "$(filename) created and exported!"
     end
 
-    if scale_f == :log10
+    if f_scale == :log10
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
     knots = (x,)
-    f_matrix = scaler.(data_matrix, scale_f)
+    f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
         itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
@@ -152,13 +152,13 @@ function create_interpolation_1D_no_units(
 
 
     function func_interp(x::Real)
-        return un_scaler(itp(scaler(x, scale_x)), scale_f)::Float64
+        return un_scaler(itp(scaler(x, x_scale)), f_scale)::Float64
     end
 
     return func_interp::Function
 end
 
-function create_interpolation_2D_no_units(
+function create_tabulation_2D_no_units(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -169,9 +169,9 @@ function create_interpolation_2D_no_units(
     ymax::Real,
     npoints_x::Int,
     npoints_y::Int,
-    scale_x = :linear,
-    scale_y = :linear,
-    scale_f = :linear,
+    x_scale = :linear,
+    y_scale = :linear,
+    f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -221,20 +221,20 @@ function create_interpolation_2D_no_units(
         data_matrix = data["func"]
 
     else
-        if scale_x == :linear
+        if x_scale == :linear
             x = range(xmin, xmax, length = npoints_x)
-        elseif scale_x == :log10
+        elseif x_scale == :log10
             x = range(log10(xmin), log10(xmax), length = npoints_x)
         else
-            throw(ArgumentError("X scale $scale_x not supported"))
+            throw(ArgumentError("X scale $x_scale not supported"))
         end
 
-        if scale_y == :linear
+        if y_scale == :linear
             y = range(ymin, ymax, length = npoints_y)
-        elseif scale_y == :log10
+        elseif y_scale == :log10
             y = range(log10(ymin), log10(ymax), length = npoints_y)
         else
-            throw(ArgumentError("Y scale $scale_y not supported"))
+            throw(ArgumentError("Y scale $y_scale not supported"))
         end
 
         if isnothing(custom_name)
@@ -250,7 +250,7 @@ function create_interpolation_2D_no_units(
 
         @threads for j = 1:npoints_y
             for i = 1:npoints_x
-                data_matrix[i, j] = arg(un_scaler(x[i], scale_x), un_scaler(y[j], scale_y))
+                data_matrix[i, j] = arg(un_scaler(x[i], x_scale), un_scaler(y[j], y_scale))
             end
             next!(p)
         end
@@ -279,12 +279,12 @@ function create_interpolation_2D_no_units(
         @info "$(filename) created and exported!"
     end
 
-    if scale_f == :log10
+    if f_scale == :log10
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
     knots = (x, y)
-    f_matrix = scaler.(data_matrix, scale_f)
+    f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
         itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
@@ -295,14 +295,14 @@ function create_interpolation_2D_no_units(
     end
 
     function func_interp(x::Real, y::Real)
-        return un_scaler(itp(scaler(x, scale_x), scaler(y, scale_y)), scale_f)::Float64
+        return un_scaler(itp(scaler(x, x_scale), scaler(y, y_scale)), f_scale)::Float64
     end
 
     return func_interp::Function
 end
 
 
-function create_interpolation_3D_no_units(
+function create_tabulation_3D_no_units(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -316,10 +316,10 @@ function create_interpolation_3D_no_units(
     npoints_x::Int,
     npoints_y::Int,
     npoints_z::Int,
-    scale_x = :linear,
-    scale_y = :linear,
-    scale_z = :linear,
-    scale_f = :linear,
+    x_scale = :linear,
+    y_scale = :linear,
+    z_scale = :linear,
+    f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -370,28 +370,28 @@ function create_interpolation_3D_no_units(
         data_matrix = data["func"]
 
     else
-        if scale_x == :linear
+        if x_scale == :linear
             x = range(xmin, xmax, length = npoints_x)
-        elseif scale_x == :log10
+        elseif x_scale == :log10
             x = range(log10(xmin), log10(xmax), length = npoints_x)
         else
-            throw(ArgumentError("X scale $scale_x not supported"))
+            throw(ArgumentError("X scale $x_scale not supported"))
         end
 
-        if scale_y == :linear
+        if y_scale == :linear
             y = range(ymin, ymax, length = npoints_y)
-        elseif scale_y == :log10
+        elseif y_scale == :log10
             y = range(log10(ymin), log10(ymax), length = npoints_y)
         else
-            throw(ArgumentError("Y scale $scale_y not supported"))
+            throw(ArgumentError("Y scale $y_scale not supported"))
         end
 
-        if scale_z == :linear
+        if z_scale == :linear
             z = range(zmin, zmax, length = npoints_z)
-        elseif scale_z == :log10
+        elseif z_scale == :log10
             z = range(log10(zmin), log10(zmax), length = npoints_z)
         else
-            throw(ArgumentError("Z scale $scale_z not supported"))
+            throw(ArgumentError("Z scale $z_scale not supported"))
         end
 
         if isnothing(custom_name)
@@ -408,7 +408,7 @@ function create_interpolation_3D_no_units(
         @threads for k = 1:npoints_z
             for j = 1:npoints_y
                 for i = 1:npoints_x
-                    data_matrix[i, j, k] = arg(un_scaler(x[i], scale_x), un_scaler(y[j], scale_y), un_scaler(z[k], scale_z))
+                    data_matrix[i, j, k] = arg(un_scaler(x[i], x_scale), un_scaler(y[j], y_scale), un_scaler(z[k], z_scale))
                 end
                 next!(p)
             end
@@ -442,12 +442,12 @@ function create_interpolation_3D_no_units(
         @info "$(filename) created and exported!"
     end
 
-    if scale_f == :log10
+    if f_scale == :log10
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
     knots = (x, y, z)
-    f_matrix = scaler.(data_matrix, scale_f)
+    f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
         itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
@@ -458,7 +458,7 @@ function create_interpolation_3D_no_units(
     end
 
     function func_interp(x::Real, y::Real, z::Real)
-        return un_scaler(itp(scaler(x, scale_x), scaler(y, scale_y), scaler.(z, scale_z)), scale_f)::Float64
+        return un_scaler(itp(scaler(x, x_scale), scaler(y, y_scale), scaler.(z, z_scale)), f_scale)::Float64
     end
 
     return func_interp::Function
@@ -520,7 +520,7 @@ end
 
 ##### interpolations with units ######
 
-function create_interpolation_1D(
+function create_tabulation_1D(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -528,8 +528,8 @@ function create_interpolation_1D(
     xmin::T,
     xmax::T,
     npoints::Int,
-    scale_x = :linear,
-    scale_f = :linear,
+    x_scale = :linear,
+    f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -539,7 +539,7 @@ function create_interpolation_1D(
     f_units = unit(func(xmin, args...; kwargs...))
 
     if f_units == NoUnits && x_units == NoUnits
-        return create_interpolation_1D_no_units(
+        return create_tabulation_1D_no_units(
             func,
             args...;
             jld_base_path = jld_base_path,
@@ -547,8 +547,8 @@ function create_interpolation_1D(
             xmin = xmin,
             xmax = xmax,
             npoints = npoints,
-            scale_x = scale_x,
-            scale_f = scale_f,
+            x_scale = x_scale,
+            f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
@@ -565,7 +565,7 @@ function create_interpolation_1D(
             name = custom_name
         end
 
-        itp = create_interpolation_1D_no_units(
+        itp = create_tabulation_1D_no_units(
             func_wrapped,
             args...;
             jld_base_path = jld_base_path,
@@ -573,8 +573,8 @@ function create_interpolation_1D(
             xmin = xmin_v,
             xmax = xmax_v,
             npoints = npoints,
-            scale_x = scale_x,
-            scale_f = scale_f,
+            x_scale = x_scale,
+            f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
@@ -585,7 +585,7 @@ function create_interpolation_1D(
     end
 end
 
-function create_interpolation_2D(
+function create_tabulation_2D(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -596,9 +596,9 @@ function create_interpolation_2D(
     ymax::V,
     npoints_x::Int,
     npoints_y::Int,
-    scale_x = :linear,
-    scale_y = :linear,
-    scale_f = :linear,
+    x_scale = :linear,
+    y_scale = :linear,
+    f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -609,7 +609,7 @@ function create_interpolation_2D(
     f_units = unit(func(xmin, ymin, args...; kwargs...))
 
     if f_units == NoUnits && x_units == NoUnits && y_units == NoUnits
-        return create_interpolation_2D_no_units(
+        return create_tabulation_2D_no_units(
             func,
             args...;
             jld_base_path = jld_base_path,
@@ -620,9 +620,9 @@ function create_interpolation_2D(
             ymax = ymax,
             npoints_x = npoints_x,
             npoints_y = npoints_y,
-            scale_x = scale_x,
-            scale_y = scale_y,
-            scale_f = scale_f,
+            x_scale = x_scale,
+            y_scale = y_scale,
+            f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
@@ -641,7 +641,7 @@ function create_interpolation_2D(
             name = custom_name
         end
 
-        itp = create_interpolation_2D_no_units(
+        itp = create_tabulation_2D_no_units(
             func_wrapped,
             args...;
             jld_base_path = jld_base_path,
@@ -652,9 +652,9 @@ function create_interpolation_2D(
             ymax = ymax_v,
             npoints_x = npoints_x,
             npoints_y = npoints_y,
-            scale_x = scale_x,
-            scale_y = scale_y,
-            scale_f = scale_f,
+            x_scale = x_scale,
+            y_scale = y_scale,
+            f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
@@ -665,7 +665,7 @@ function create_interpolation_2D(
     end
 end
 
-function create_interpolation_3D(
+function create_tabulation_3D(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -679,10 +679,10 @@ function create_interpolation_3D(
     npoints_x::Int,
     npoints_y::Int,
     npoints_z::Int,
-    scale_x = :linear,
-    scale_y = :linear,
-    scale_z = :linear,
-    scale_f = :linear,
+    x_scale = :linear,
+    y_scale = :linear,
+    z_scale = :linear,
+    f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -694,7 +694,7 @@ function create_interpolation_3D(
     f_units = unit(func(xmin, ymin, zmin, args...; kwargs...))
 
     if f_units == NoUnits && x_units == NoUnits && y_units == NoUnits && z_units == NoUnits
-        return create_interpolation_3D_no_units(
+        return create_tabulation_3D_no_units(
             func,
             args...;
             jld_base_path = jld_base_path,
@@ -708,10 +708,10 @@ function create_interpolation_3D(
             npoints_x = npoints_x,
             npoints_y = npoints_y,
             npoints_z = npoints_z,
-            scale_x = scale_x,
-            scale_y = scale_y,
-            scale_z = scale_z,
-            scale_f = scale_f,
+            x_scale = x_scale,
+            y_scale = y_scale,
+            z_scale = z_scale,
+            f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
@@ -732,7 +732,7 @@ function create_interpolation_3D(
             name = custom_name
         end
 
-        itp = create_interpolation_3D_no_units(
+        itp = create_tabulation_3D_no_units(
             func_wrapped,
             args...;
             jld_base_path = jld_base_path,
@@ -746,10 +746,10 @@ function create_interpolation_3D(
             npoints_x = npoints_x,
             npoints_y = npoints_y,
             npoints_z = npoints_z,
-            scale_x = scale_x,
-            scale_y = scale_y,
-            scale_z = scale_z,
-            scale_f = scale_f,
+            x_scale = x_scale,
+            y_scale = y_scale,
+            z_scale = z_scale,
+            f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...

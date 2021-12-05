@@ -2,21 +2,21 @@ using Tabulations
 using Unitful
 using Test
 
-@testset "create_interpolation_1D_no_units" begin
+@testset "create_tabulation_1D_no_units" begin
     func_1d(x) = sin(x)
 
     # create interpolations and test them
 
-    itp_1d_1 = create_interpolation_1D(
+    itp_1d_1 = create_tabulation_1D(
         func_1d,
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
-        scale_x = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_1d_2 = create_interpolation_1D(
+    itp_1d_2 = create_tabulation_1D(
         func_1d,
         jld_base_path = "interpolations",
         custom_name = "1d_2",
@@ -24,8 +24,8 @@ using Test
         xmax = 3.0,
         npoints = 100,
         interpolation_type = :cubic,
-        scale_x = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        f_scale = :log10
     )
 
     @test isapprox(itp_1d_1(2.0), func_1d(2.0), rtol = 1e-3)
@@ -33,16 +33,16 @@ using Test
 
     # load interpolations and test them
 
-    itp_1d_1 = create_interpolation_1D(
+    itp_1d_1 = create_tabulation_1D(
         func_1d,
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
-        scale_x = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_1d_2 = create_interpolation_1D(
+    itp_1d_2 = create_tabulation_1D(
         func_1d,
         custom_name = "1d_2",
         jld_base_path = "interpolations",
@@ -50,8 +50,8 @@ using Test
         xmax = 3.0,
         npoints = 100,
         interpolation_type = :cubic,
-        scale_x = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        f_scale = :log10
     )
 
     @test isapprox(itp_1d_1(2.0), func_1d(2.0), rtol = 1e-3)
@@ -62,29 +62,29 @@ using Test
     rm("interpolations")
 end
 
-@testset "create_interpolation_1D_with_units" begin
+@testset "create_tabulation_1D_with_units" begin
     func_1d(x) = x^2
 
     # create interpolations and test them
 
-    itp_1d_1 = create_interpolation_1D(
+    itp_1d_1 = create_tabulation_1D(
         func_1d,
         custom_name = "1d_1",
         xmin = 0.0u"m",
         xmax = 3.0u"m",
         npoints = 100,
-        scale_x = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_1d_2 = create_interpolation_1D(
+    itp_1d_2 = create_tabulation_1D(
         func_1d,
         custom_name = "1d_2",
         xmin = 1e-1u"m",
         xmax = 3.0u"m",
         npoints = 100,
-        scale_x = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        f_scale = :log10
     )
 
     @test isapprox(itp_1d_1(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
@@ -92,24 +92,24 @@ end
 
     # load interpolations and test them
 
-    itp_1d_1 = create_interpolation_1D(
+    itp_1d_1 = create_tabulation_1D(
         func_1d,
         custom_name = "1d_1",
         xmin = 0.0u"m",
         xmax = 3.0u"m",
         npoints = 100,
-        scale_x = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_1d_2 = create_interpolation_1D(
+    itp_1d_2 = create_tabulation_1D(
         func_1d,
         custom_name = "1d_2",
         xmin = 1e-1u"m",
         xmax = 3.0u"m",
         npoints = 100,
-        scale_x = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        f_scale = :log10
     )
 
     @test isapprox(itp_1d_1(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
@@ -119,12 +119,12 @@ end
     rm("1d_2_data.jld2")
 end
 
-@testset "create_interpolation_2D_no_units" begin
+@testset "create_tabulation_2D_no_units" begin
     func_2d(x, y) = sin(x) * sin(y)
 
     # create interpolations and test them
 
-    itp_2d_1 = create_interpolation_2D(
+    itp_2d_1 = create_tabulation_2D(
         func_2d,
         xmin = 0.0,
         xmax = 1.0,
@@ -132,12 +132,12 @@ end
         ymax = 2.0,
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_2d_2 = create_interpolation_2D(
+    itp_2d_2 = create_tabulation_2D(
         func_2d,
         custom_name = "2d_2",
         jld_base_path = "interpolations",
@@ -148,16 +148,16 @@ end
         npoints_x = 100,
         npoints_y = 200,
         interpolation_type = :cubic,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
 
     # load interpolations and test them
 
-    itp_2d_1 = create_interpolation_2D(
+    itp_2d_1 = create_tabulation_2D(
         func_2d,
         xmin = 0.0,
         xmax = 1.0,
@@ -165,12 +165,12 @@ end
         ymax = 2.0,
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_2d_2 = create_interpolation_2D(
+    itp_2d_2 = create_tabulation_2D(
         func_2d,
         custom_name = "2d_2",
         jld_base_path = "interpolations",
@@ -181,9 +181,9 @@ end
         npoints_x = 100,
         npoints_y = 200,
         interpolation_type = :cubic,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
@@ -193,12 +193,12 @@ end
     rm("interpolations")
 end
 
-@testset "create_interpolation_2D_with_units" begin
+@testset "create_tabulation_2D_with_units" begin
     func_2d(x, y) = x^2 / y
 
     # create interpolations and test them
 
-    itp_2d_1 = create_interpolation_2D(
+    itp_2d_1 = create_tabulation_2D(
         func_2d,
         custom_name = "2d_1",
         xmin = 0.0u"m",
@@ -207,12 +207,12 @@ end
         ymax = 2.0u"s",
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_2d_2 = create_interpolation_2D(
+    itp_2d_2 = create_tabulation_2D(
         func_2d,
         custom_name = "2d_2",
         xmin = 1e-1u"m",
@@ -221,16 +221,16 @@ end
         ymax = 2.0u"s",
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_2d_1(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
 
     # load interpolations and test them
 
-    itp_2d_1 = create_interpolation_2D(
+    itp_2d_1 = create_tabulation_2D(
         func_2d,
         custom_name = "2d_1",
         xmin = 0.0u"m",
@@ -239,12 +239,12 @@ end
         ymax = 2.0u"s",
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_2d_2 = create_interpolation_2D(
+    itp_2d_2 = create_tabulation_2D(
         func_2d,
         custom_name = "2d_2",
         xmin = 1e-1u"m",
@@ -253,9 +253,9 @@ end
         ymax = 2.0u"s",
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_2d_1(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
@@ -264,11 +264,11 @@ end
     rm("2d_2_data.jld2")
 end
 
-@testset "create_interpolation_3D_no_units" begin
+@testset "create_tabulation_3D_no_units" begin
     func_3d(x, y, z) = x * y + z
 
     # create interpolations and test them
-    itp_3d_1 = create_interpolation_3D(
+    itp_3d_1 = create_tabulation_3D(
         func_3d,
         xmin = 0.0,
         xmax = 1.0,
@@ -279,13 +279,13 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_z = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_3d_2 = create_interpolation_3D(
+    itp_3d_2 = create_tabulation_3D(
         func_3d,
         jld_base_path = "interpolations",
         custom_name = "3d_2",
@@ -299,17 +299,17 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_z = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
 
     # load interpolations and test them
 
-    itp_3d_1 = create_interpolation_3D(
+    itp_3d_1 = create_tabulation_3D(
         func_3d,
         xmin = 0.0,
         xmax = 1.0,
@@ -320,13 +320,13 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_z = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_3d_2 = create_interpolation_3D(
+    itp_3d_2 = create_tabulation_3D(
         func_3d,
         jld_base_path = "interpolations",
         custom_name = "3d_2",
@@ -340,10 +340,10 @@ end
         npoints_y = 200,
         npoints_z = 200,
         interpolation_type = :cubic,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_z = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
@@ -354,11 +354,11 @@ end
 end
 
 
-@testset "create_interpolation_3D_with_units" begin
+@testset "create_tabulation_3D_with_units" begin
     func_3d(x, y, z) = x * y + z
 
     # create interpolations and test them
-    itp_3d_1 = create_interpolation_3D(
+    itp_3d_1 = create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0u"m",
@@ -370,13 +370,13 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_z = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_3d_2 = create_interpolation_3D(
+    itp_3d_2 = create_tabulation_3D(
         func_3d,
         custom_name = "3d_2",
         xmin = 1e-1u"m",
@@ -388,17 +388,17 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_z = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
 
     # load interpolations and test them
 
-    itp_3d_1 = create_interpolation_3D(
+    itp_3d_1 = create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0u"m",
@@ -410,13 +410,13 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_z = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
     )
 
-    itp_3d_2 = create_interpolation_3D(
+    itp_3d_2 = create_tabulation_3D(
         func_3d,
         custom_name = "3d_2",
         xmin = 1e-1u"m",
@@ -428,10 +428,10 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :log10,
-        scale_y = :log10,
-        scale_z = :log10,
-        scale_f = :log10
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
     )
     @test isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
@@ -448,25 +448,25 @@ end
     @test_throws ArgumentError Tabulations.scaler(1.0, :nan)
     @test_throws ArgumentError Tabulations.un_scaler(1.0, :nan)
 
-    @test_throws ArgumentError create_interpolation_1D(
+    @test_throws ArgumentError create_tabulation_1D(
         func_1d,
         custom_name = "1d_1",
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
-        scale_x = :nan,
-        scale_f = :linear
+        x_scale = :nan,
+        f_scale = :linear
     )
-    @test_throws ArgumentError create_interpolation_1D(
+    @test_throws ArgumentError create_tabulation_1D(
         func_1d,
         custom_name = "1d_1",
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
-        scale_x = :linear,
-        scale_f = :nan
+        x_scale = :linear,
+        f_scale = :nan
     )
-    @test_throws ArgumentError create_interpolation_1D(
+    @test_throws ArgumentError create_tabulation_1D(
         func_1d,
         custom_name = "1d_1",
         xmin = 0.0,
@@ -475,7 +475,7 @@ end
         interpolation_type = :nan,
     )
 
-    @test_throws ArgumentError create_interpolation_2D(
+    @test_throws ArgumentError create_tabulation_2D(
         func_2d,
         custom_name = "2d_1",
         xmin = 0.0,
@@ -484,11 +484,11 @@ end
         ymax = 2.0,
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :nan,
-        scale_y = :linear,
-        scale_f = :linear
+        x_scale = :nan,
+        y_scale = :linear,
+        f_scale = :linear
     )
-    @test_throws ArgumentError create_interpolation_2D(
+    @test_throws ArgumentError create_tabulation_2D(
         func_2d,
         custom_name = "2d_1",
         xmin = 0.0,
@@ -497,11 +497,11 @@ end
         ymax = 2.0,
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :linear,
-        scale_y = :nan,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :nan,
+        f_scale = :linear
     )
-    @test_throws ArgumentError create_interpolation_2D(
+    @test_throws ArgumentError create_tabulation_2D(
         func_2d,
         custom_name = "2d_1",
         xmin = 0.0,
@@ -510,11 +510,11 @@ end
         ymax = 2.0,
         npoints_x = 100,
         npoints_y = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_f = :nan
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :nan
     )
-    @test_throws ArgumentError create_interpolation_2D(
+    @test_throws ArgumentError create_tabulation_2D(
         func_2d,
         custom_name = "2d_1",
         xmin = 0.0,
@@ -526,7 +526,7 @@ end
         interpolation_type = :nan,
     )
 
-    @test_throws ArgumentError  create_interpolation_3D(
+    @test_throws ArgumentError  create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0,
@@ -538,12 +538,12 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :nan,
-        scale_y = :linear,
-        scale_z = :linear,
-        scale_f = :linear
+        x_scale = :nan,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
     )
-    @test_throws ArgumentError  create_interpolation_3D(
+    @test_throws ArgumentError  create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0,
@@ -555,12 +555,12 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :nan,
-        scale_z = :linear,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :nan,
+        z_scale = :linear,
+        f_scale = :linear
     )
-    @test_throws ArgumentError  create_interpolation_3D(
+    @test_throws ArgumentError  create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0,
@@ -572,12 +572,12 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_z = :nan,
-        scale_f = :linear
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :nan,
+        f_scale = :linear
     )
-    @test_throws ArgumentError  create_interpolation_3D(
+    @test_throws ArgumentError  create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0,
@@ -589,12 +589,12 @@ end
         npoints_x = 100,
         npoints_y = 200,
         npoints_z = 200,
-        scale_x = :linear,
-        scale_y = :linear,
-        scale_z = :linear,
-        scale_f = :nan
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :nan
     )
-    @test_throws ArgumentError  create_interpolation_3D(
+    @test_throws ArgumentError  create_tabulation_3D(
         func_3d,
         custom_name = "3d_1",
         xmin = 0.0,
