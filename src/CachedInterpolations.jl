@@ -17,7 +17,7 @@ function scaler(x::Real, scale::Symbol)
     elseif scale == :log10
         return log10(x)
     else
-        error("Scale <$scale> is not supported")
+        throw(ArgumentError("Scale <$scale> is not supported"))
     end
 end
 
@@ -27,7 +27,7 @@ function un_scaler(x::Real, scale::Symbol)
     elseif scale == :log10
         return 10 .^ x
     else
-        error("Scale <$scale> is not supported")
+        throw(ArgumentError("Scale <$scale> is not supported"))
     end
 end
 
@@ -93,7 +93,7 @@ function create_interpolation_1D_no_units(
         elseif scale_x == :log10
             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints)
         else
-            error("X scale $scale_x not supported")
+            throw(ArgumentError("X scale $scale_x not supported"))
         end
 
         if isnothing(custom_name)
@@ -216,7 +216,7 @@ function create_interpolation_2D_no_units(
         elseif scale_x == :log10
             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints_x)
         else
-            error("X scale $scale_x not supported")
+            throw(ArgumentError("X scale $scale_x not supported"))
         end
 
         if scale_y == :linear
@@ -224,7 +224,7 @@ function create_interpolation_2D_no_units(
         elseif scale_y == :log10
             y = 10 .^ range(log10(ymin), log10(ymax), length = npoints_y)
         else
-            error("Y scale $scale_y not supported")
+            throw(ArgumentError("Y scale $scale_y not supported"))
         end
 
         if isnothing(custom_name)
@@ -357,7 +357,7 @@ function create_interpolation_3D_no_units(
         elseif scale_x == :log10
             x = 10 .^ range(log10(xmin), log10(xmax), length = npoints_x)
         else
-            error("X scale $scale_x not supported")
+            throw(ArgumentError("X scale $scale_x not supported"))
         end
 
         if scale_y == :linear
@@ -365,7 +365,7 @@ function create_interpolation_3D_no_units(
         elseif scale_y == :log10
             y = 10 .^ range(log10(ymin), log10(ymax), length = npoints_y)
         else
-            error("Y scale $scale_y not supported")
+            throw(ArgumentError("Y scale $scale_y not supported"))
         end
 
         if scale_z == :linear
@@ -373,7 +373,7 @@ function create_interpolation_3D_no_units(
         elseif scale_z == :log10
             z = 10 .^ range(log10(zmin), log10(zmax), length = npoints_z)
         else
-            error("Z scale $scale_z not supported")
+            throw(ArgumentError("Z scale $scale_z not supported"))
         end
 
         if isnothing(custom_name)

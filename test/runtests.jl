@@ -431,4 +431,141 @@ end
     rm("3d_2_data.jld")
 end
 
+@testset "errors" begin
+    func_1d(x) = sin(x)
+    func_2d(x, y) = sin(x) * sin(y)
+    func_3d(x, y, z) = x * y + z
+
+    @test_throws ArgumentError CachedInterpolations.scaler(1.0, :nan)
+    @test_throws ArgumentError CachedInterpolations.un_scaler(1.0, :nan)
+
+    @test_throws ArgumentError create_interpolation_1D(
+        func_1d,
+        custom_name = "1d_1",
+        xmin = 0.0,
+        xmax = 3.0,
+        npoints = 100,
+        scale_x = :nan,
+        scale_f = :linear
+    )
+    @test_throws ArgumentError create_interpolation_1D(
+        func_1d,
+        custom_name = "1d_1",
+        xmin = 0.0,
+        xmax = 3.0,
+        npoints = 100,
+        scale_x = :linear,
+        scale_f = :nan
+    )
+
+    @test_throws ArgumentError create_interpolation_2D(
+        func_2d,
+        custom_name = "2d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        scale_x = :nan,
+        scale_y = :linear,
+        scale_f = :linear
+    )
+    @test_throws ArgumentError create_interpolation_2D(
+        func_2d,
+        custom_name = "2d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        scale_x = :linear,
+        scale_y = :nan,
+        scale_f = :linear
+    )
+    @test_throws ArgumentError create_interpolation_2D(
+        func_2d,
+        custom_name = "2d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        scale_x = :linear,
+        scale_y = :linear,
+        scale_f = :nan
+    )
+
+    @test_throws ArgumentError  create_interpolation_3D(
+        func_3d,
+        custom_name = "3d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        zmin = 0.0,
+        zmax = 3.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        npoints_z = 200,
+        scale_x = :nan,
+        scale_y = :linear,
+        scale_z = :linear,
+        scale_f = :linear
+    )
+    @test_throws ArgumentError  create_interpolation_3D(
+        func_3d,
+        custom_name = "3d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        zmin = 0.0,
+        zmax = 3.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        npoints_z = 200,
+        scale_x = :linear,
+        scale_y = :nan,
+        scale_z = :linear,
+        scale_f = :linear
+    )
+    @test_throws ArgumentError  create_interpolation_3D(
+        func_3d,
+        custom_name = "3d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        zmin = 0.0,
+        zmax = 3.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        npoints_z = 200,
+        scale_x = :linear,
+        scale_y = :linear,
+        scale_z = :nan,
+        scale_f = :linear
+    )
+    @test_throws ArgumentError  create_interpolation_3D(
+        func_3d,
+        custom_name = "3d_1",
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        zmin = 0.0,
+        zmax = 3.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        npoints_z = 200,
+        scale_x = :linear,
+        scale_y = :linear,
+        scale_z = :linear,
+        scale_f = :nan
+    )
+end
+
 
