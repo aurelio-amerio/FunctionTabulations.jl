@@ -566,6 +566,9 @@ end
         scale_z = :linear,
         scale_f = :nan
     )
+    rm("1d_1_data.jld")
+    rm("2d_1_data.jld")
+    rm("3d_1_data.jld")
 end
 
 
