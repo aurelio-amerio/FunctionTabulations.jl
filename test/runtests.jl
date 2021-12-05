@@ -9,7 +9,6 @@ using Test
 
     itp_1d_1 = create_interpolation_1D(
         func_1d,
-        custom_name = "1d_1",
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
@@ -19,6 +18,7 @@ using Test
 
     itp_1d_2 = create_interpolation_1D(
         func_1d,
+        jld_base_path = "interpolations",
         custom_name = "1d_2",
         xmin = 1e-1,
         xmax = 3.0,
@@ -34,7 +34,6 @@ using Test
 
     itp_1d_1 = create_interpolation_1D(
         func_1d,
-        custom_name = "1d_1",
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
@@ -45,6 +44,7 @@ using Test
     itp_1d_2 = create_interpolation_1D(
         func_1d,
         custom_name = "1d_2",
+        jld_base_path = "interpolations",
         xmin = 1e-1,
         xmax = 3.0,
         npoints = 100,
@@ -55,8 +55,9 @@ using Test
     @test isapprox(itp_1d_1(2.0), func_1d(2.0), rtol = 1e-3)
     @test isapprox(itp_1d_2(2.0), func_1d(2.0), rtol = 1e-3)
 
-    rm("1d_1_data.jld")
-    rm("1d_2_data.jld")
+    rm("func_1d_data.jld")
+    rm("interpolations/1d_2_data.jld")
+    rm("interpolations")
 end
 
 @testset "create_interpolation_1D_with_units" begin
@@ -123,7 +124,6 @@ end
 
     itp_2d_1 = create_interpolation_2D(
         func_2d,
-        custom_name = "2d_1",
         xmin = 0.0,
         xmax = 1.0,
         ymin = 0.0,
@@ -138,6 +138,7 @@ end
     itp_2d_2 = create_interpolation_2D(
         func_2d,
         custom_name = "2d_2",
+        jld_base_path = "interpolations",
         xmin = 1e-1,
         xmax = 1.0,
         ymin = 1e-1,
@@ -155,7 +156,6 @@ end
 
     itp_2d_1 = create_interpolation_2D(
         func_2d,
-        custom_name = "2d_1",
         xmin = 0.0,
         xmax = 1.0,
         ymin = 0.0,
@@ -170,6 +170,7 @@ end
     itp_2d_2 = create_interpolation_2D(
         func_2d,
         custom_name = "2d_2",
+        jld_base_path = "interpolations",
         xmin = 1e-1,
         xmax = 1.0,
         ymin = 1e-1,
@@ -183,8 +184,9 @@ end
     @test isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
 
-    rm("2d_1_data.jld")
-    rm("2d_2_data.jld")
+    rm("func_2d_data.jld")
+    rm("interpolations/2d_2_data.jld")
+    rm("interpolations")
 end
 
 @testset "create_interpolation_2D_with_units" begin
@@ -264,7 +266,6 @@ end
     # create interpolations and test them
     itp_3d_1 = create_interpolation_3D(
         func_3d,
-        custom_name = "3d_1",
         xmin = 0.0,
         xmax = 1.0,
         ymin = 0.0,
@@ -282,6 +283,7 @@ end
 
     itp_3d_2 = create_interpolation_3D(
         func_3d,
+        jld_base_path = "interpolations",
         custom_name = "3d_2",
         xmin = 1e-1,
         xmax = 1.0,
@@ -304,7 +306,6 @@ end
 
     itp_3d_1 = create_interpolation_3D(
         func_3d,
-        custom_name = "3d_1",
         xmin = 0.0,
         xmax = 1.0,
         ymin = 0.0,
@@ -322,6 +323,7 @@ end
 
     itp_3d_2 = create_interpolation_3D(
         func_3d,
+        jld_base_path = "interpolations",
         custom_name = "3d_2",
         xmin = 1e-1,
         xmax = 1.0,
@@ -340,8 +342,9 @@ end
     @test isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
 
-    rm("3d_1_data.jld")
-    rm("3d_2_data.jld")
+    rm("func_3d_data.jld")
+    rm("interpolations/3d_2_data.jld")
+    rm("interpolations")
 end
 
 
