@@ -2,10 +2,13 @@ module CachedInterpolations
 using Interpolations
 using JLD
 using ProgressMeter
-
+using Unitful
+using Unitful: FreeUnits
 using Base.Threads
 
 export create_interpolation_1D, create_interpolation_2D, create_interpolation_3D
+
+# get_unit_annotation(x::Union{Quantity,FreeUnits}) = Quantity{T,dimension(x),W} where {T<:Real,W<:FreeUnits}
 
 
 function scaler(x::Real, scale::Symbol)
@@ -28,7 +31,7 @@ function un_scaler(x::Real, scale::Symbol)
     end
 end
 
-function create_interpolation_1D(
+function create_interpolation_1D_no_units(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -146,7 +149,7 @@ function create_interpolation_1D(
     return func_interp::Function
 end
 
-function create_interpolation_2D(
+function create_interpolation_2D_no_units(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -282,7 +285,7 @@ function create_interpolation_2D(
 end
 
 
-function create_interpolation_3D(
+function create_interpolation_3D_no_units(
     func::Function,
     args...;
     jld_base_path = nothing,
@@ -435,6 +438,294 @@ function create_interpolation_3D(
 
     return func_interp::Function
 end
+
+function wrap_function_1D_add_units(func, x_units, f_units, args...; kwargs...)
+    function wrapped_func(x)
+        x_v = ustrip(x_units, x)
+        return func(x_v, args...; kwargs...) * f_units
+    end
+    return wrapped_func
+end
+
+function wrap_function_2D_add_units(func, x_units, y_units, f_units, args...; kwargs...)
+    function wrapped_func(x, y)
+        x_v = ustrip(x_units, x)
+        y_v = ustrip(y_units, y)
+        return func(x_v, y_v, args...; kwargs...) * f_units
+    end
+    return wrapped_func
+end
+
+function wrap_function_3D_add_units(func, x_units, y_units, z_units, f_units, args...; kwargs...)
+    function wrapped_func(x, y, z)
+        x_v = ustrip(x_units, x)
+        y_v = ustrip(y_units, y)
+        z_v = ustrip(z_units, z)
+        return func(x_v, y_v, z_v, args...; kwargs...) * f_units
+    end
+    return wrapped_func
+end
+
+function wrap_function_1D_remove_units(func, x_units, f_units, args...; kwargs...)
+    function wrapped_function(x::Real)
+        x_v = x * x_units
+        return ustrip(f_units, func(x_v, args...; kwargs...))
+    end
+    return wrapped_function
+end
+
+function wrap_function_2D_remove_units(func, x_units, y_units, f_units, args...; kwargs...)
+    function wrapped_function(x::Real, y::Real)
+        x_v = x * x_units
+        y_v = y * y_units
+        return ustrip(f_units, func(x_v, y_v, args...; kwargs...))
+    end
+    return wrapped_function
+end
+
+function wrap_function_3D_remove_units(func, x_units, y_units, z_units, f_units, args...; kwargs...)
+    function wrapped_function(x::Real, y::Real, z::Real)
+        x_v = x * x_units
+        y_v = y * y_units
+        z_v = z * z_units
+        return ustrip(f_units, func(x_v, y_v, z_v, args...; kwargs...))
+    end
+    return wrapped_function
+end
+
+##### interpolations with units ######
+
+function create_interpolation_1D(
+    func::Function,
+    args...;
+    jld_base_path = nothing,
+    custom_name = nothing,
+    xmin::T,
+    xmax::T,
+    npoints::Int,
+    scale_x = :linear,
+    scale_f = :linear,
+    extrapolation_bc = Throw,
+    kwargs...
+) where {T<:Union{Real,Quantity}}
+
+    x_units = unit(xmin)
+    f_units = unit(func(xmin, args...; kwargs...))
+
+    if f_units == NoUnits && x_units == NoUnits
+        return create_interpolation_1D_no_units(
+            func,
+            args...;
+            jld_base_path = jld_base_path,
+            custom_name = custom_name,
+            xmin = xmin,
+            xmax = xmax,
+            npoints = npoints,
+            scale_x = scale_x,
+            scale_f = scale_f,
+            extrapolation_bc = extrapolation_bc,
+            kwargs...
+        )
+    else
+        func_wrapped = wrap_function_1D_remove_units(func, x_units, f_units)
+
+        xmin_v = ustrip(x_units, xmin)
+        xmax_v = ustrip(x_units, xmax)
+
+        if isnothing(custom_name)
+            name = nameof(func)
+        else
+            name = custom_name
+        end
+
+        itp = create_interpolation_1D_no_units(
+            func_wrapped,
+            args...;
+            jld_base_path = jld_base_path,
+            custom_name = name,
+            xmin = xmin_v,
+            xmax = xmax_v,
+            npoints = npoints,
+            scale_x = scale_x,
+            scale_f = scale_f,
+            extrapolation_bc = extrapolation_bc,
+            kwargs...
+        )
+
+        scaled_itp = wrap_function_1D_add_units(itp, x_units, f_units)
+        return scaled_itp
+    end
+end
+
+function create_interpolation_2D(
+    func::Function,
+    args...;
+    jld_base_path = nothing,
+    custom_name = nothing,
+    xmin::T,
+    xmax::T,
+    ymin::V,
+    ymax::V,
+    npoints_x::Int,
+    npoints_y::Int,
+    scale_x = :linear,
+    scale_y = :linear,
+    scale_f = :linear,
+    extrapolation_bc = Throw,
+    kwargs...
+) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
+
+    x_units = unit(xmin)
+    y_units = unit(ymin)
+    f_units = unit(func(xmin, ymin, args...; kwargs...))
+
+    if f_units == NoUnits && x_units == NoUnits && y_units == NoUnits
+        return create_interpolation_2D_no_units(
+            func,
+            args...;
+            jld_base_path = jld_base_path,
+            custom_name = custom_name,
+            xmin = xmin,
+            xmax = xmax,
+            ymin = ymin,
+            ymax = ymax,
+            npoints_x = npoints_x,
+            npoints_y = npoints_y,
+            scale_x = scale_x,
+            scale_y = scale_y,
+            scale_f = scale_f,
+            extrapolation_bc = extrapolation_bc,
+            kwargs...
+        )
+    else
+        func_wrapped = wrap_function_2D_remove_units(func, x_units, y_units, f_units)
+
+        xmin_v = ustrip(x_units, xmin)
+        xmax_v = ustrip(x_units, xmax)
+        ymin_v = ustrip(y_units, ymin)
+        ymax_v = ustrip(y_units, ymax)
+
+        if isnothing(custom_name)
+            name = nameof(func)
+        else
+            name = custom_name
+        end
+
+        itp = create_interpolation_2D_no_units(
+            func_wrapped,
+            args...;
+            jld_base_path = jld_base_path,
+            custom_name = name,
+            xmin = xmin_v,
+            xmax = xmax_v,
+            ymin = ymin_v,
+            ymax = ymax_v,
+            npoints_x = npoints_x,
+            npoints_y = npoints_y,
+            scale_x = scale_x,
+            scale_y = scale_y,
+            scale_f = scale_f,
+            extrapolation_bc = extrapolation_bc,
+            kwargs...
+        )
+
+        scaled_itp = wrap_function_2D_add_units(itp, x_units, y_units, f_units)
+        return scaled_itp
+    end
+end
+
+function create_interpolation_3D(
+    func::Function,
+    args...;
+    jld_base_path = nothing,
+    custom_name = nothing,
+    xmin::T,
+    xmax::T,
+    ymin::V,
+    ymax::V,
+    zmin::W,
+    zmax::W,
+    npoints_x::Int,
+    npoints_y::Int,
+    npoints_z::Int,
+    scale_x = :linear,
+    scale_y = :linear,
+    scale_z = :linear,
+    scale_f = :linear,
+    extrapolation_bc = Throw,
+    kwargs...
+) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
+
+    x_units = unit(xmin)
+    y_units = unit(ymin)
+    z_units = unit(zmin)
+    f_units = unit(func(xmin, ymin, zmin, args...; kwargs...))
+
+    if f_units == NoUnits && x_units == NoUnits && y_units == NoUnits && z_units == NoUnits
+        return create_interpolation_3D_no_units(
+            func,
+            args...;
+            jld_base_path = jld_base_path,
+            custom_name = custom_name,
+            xmin = xmin,
+            xmax = xmax,
+            ymin = ymin,
+            ymax = ymax,
+            zmin = zmin,
+            zmax = zmax,
+            npoints_x = npoints_x,
+            npoints_y = npoints_y,
+            npoints_z = npoints_z,
+            scale_x = scale_x,
+            scale_y = scale_y,
+            scale_z = scale_z,
+            scale_f = scale_f,
+            extrapolation_bc = extrapolation_bc,
+            kwargs...
+        )
+    else
+        func_wrapped = wrap_function_3D_remove_units(func, x_units, y_units, z_units, f_units)
+
+        xmin_v = ustrip(x_units, xmin)
+        xmax_v = ustrip(x_units, xmax)
+        ymin_v = ustrip(y_units, ymin)
+        ymax_v = ustrip(y_units, ymax)
+        zmin_v = ustrip(z_units, zmin)
+        zmax_v = ustrip(z_units, zmax)
+
+        if isnothing(custom_name)
+            name = nameof(func)
+        else
+            name = custom_name
+        end
+
+        itp = create_interpolation_3D_no_units(
+            func_wrapped,
+            args...;
+            jld_base_path = jld_base_path,
+            custom_name = name,
+            xmin = xmin_v,
+            xmax = xmax_v,
+            ymin = ymin_v,
+            ymax = ymax_v,
+            zmin = zmin_v,
+            zmax = zmax_v,
+            npoints_x = npoints_x,
+            npoints_y = npoints_y,
+            npoints_z = npoints_z,
+            scale_x = scale_x,
+            scale_y = scale_y,
+            scale_z = scale_z,
+            scale_f = scale_f,
+            extrapolation_bc = extrapolation_bc,
+            kwargs...
+        )
+
+        scaled_itp = wrap_function_3D_add_units(itp, x_units, y_units, z_units, f_units)
+        return scaled_itp
+    end
+end
+
 
 #TODO
 # function create_interpolation_ND(
