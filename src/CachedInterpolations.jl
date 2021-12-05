@@ -1,6 +1,6 @@
 module CachedInterpolations
 using Interpolations
-using JLD
+using JLD2
 using ProgressMeter
 using Unitful
 using Unitful: FreeUnits
@@ -41,6 +41,7 @@ function create_interpolation_1D_no_units(
     npoints::Int,
     scale_x = :linear,
     scale_f = :linear,
+    interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
 )
@@ -60,9 +61,9 @@ function create_interpolation_1D_no_units(
     end
 
     if isnothing(custom_name)
-        filename = "$(func_name)_data.jld"
+        filename = "$(func_name)_data.jld2"
     else
-        filename = "$(custom_name)_data.jld"
+        filename = "$(custom_name)_data.jld2"
     end
 
     filepath = "$(base_path)/$(filename)"
@@ -91,7 +92,7 @@ function create_interpolation_1D_no_units(
         if scale_x == :linear
             x = range(xmin, xmax, length = npoints)
         elseif scale_x == :log10
-            x = 10 .^ range(log10(xmin), log10(xmax), length = npoints)
+            x = range(log10(xmin), log10(xmax), length = npoints)
         else
             throw(ArgumentError("X scale $scale_x not supported"))
         end
@@ -109,7 +110,7 @@ function create_interpolation_1D_no_units(
 
         @threads for i = 1:npoints
 
-            data_matrix[i] = arg(x[i])
+            data_matrix[i] = arg(un_scaler(x[i], scale_x))
 
             next!(p)
         end
@@ -120,9 +121,10 @@ function create_interpolation_1D_no_units(
                 String,
                 Real,
                 Array{Float64},
+                StepRangeLen
             },
         }()
-        data_dict["x"] = collect(x)
+        data_dict["x"] = x
         data_dict["func"] = convert(Array{Float64}, data_matrix)
 
         data_dict["xmin"] = xmin
@@ -137,10 +139,17 @@ function create_interpolation_1D_no_units(
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
-    knots = (scaler.(x, scale_x),)
+    knots = (x,)
     f_matrix = scaler.(data_matrix, scale_f)
 
-    itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    if interpolation_type == :linear
+        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    elseif interpolation_type == :cubic
+        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    else
+        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
+    end
+
 
     function func_interp(x::Real)
         return un_scaler(itp(scaler(x, scale_x)), scale_f)::Float64
@@ -163,6 +172,7 @@ function create_interpolation_2D_no_units(
     scale_x = :linear,
     scale_y = :linear,
     scale_f = :linear,
+    interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
 )
@@ -182,9 +192,9 @@ function create_interpolation_2D_no_units(
     end
 
     if isnothing(custom_name)
-        filename = "$(func_name)_data.jld"
+        filename = "$(func_name)_data.jld2"
     else
-        filename = "$(custom_name)_data.jld"
+        filename = "$(custom_name)_data.jld2"
     end
 
     filepath = "$(base_path)/$(filename)"
@@ -214,7 +224,7 @@ function create_interpolation_2D_no_units(
         if scale_x == :linear
             x = range(xmin, xmax, length = npoints_x)
         elseif scale_x == :log10
-            x = 10 .^ range(log10(xmin), log10(xmax), length = npoints_x)
+            x = range(log10(xmin), log10(xmax), length = npoints_x)
         else
             throw(ArgumentError("X scale $scale_x not supported"))
         end
@@ -222,7 +232,7 @@ function create_interpolation_2D_no_units(
         if scale_y == :linear
             y = range(ymin, ymax, length = npoints_y)
         elseif scale_y == :log10
-            y = 10 .^ range(log10(ymin), log10(ymax), length = npoints_y)
+            y = range(log10(ymin), log10(ymax), length = npoints_y)
         else
             throw(ArgumentError("Y scale $scale_y not supported"))
         end
@@ -240,7 +250,7 @@ function create_interpolation_2D_no_units(
 
         @threads for j = 1:npoints_y
             for i = 1:npoints_x
-                data_matrix[i, j] = arg(x[i], y[j])
+                data_matrix[i, j] = arg(un_scaler(x[i], scale_x), un_scaler(y[j], scale_y))
             end
             next!(p)
         end
@@ -251,10 +261,11 @@ function create_interpolation_2D_no_units(
                 String,
                 Real,
                 Array{Float64},
+                StepRangeLen,
             },
         }()
-        data_dict["x"] = collect(x)
-        data_dict["y"] = collect(y)
+        data_dict["x"] = x
+        data_dict["y"] = y
         data_dict["func"] = convert(Array{Float64}, data_matrix)
 
         data_dict["xmin"] = xmin
@@ -272,10 +283,16 @@ function create_interpolation_2D_no_units(
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
-    knots = (scaler.(x, scale_x), scaler.(y, scale_y))
+    knots = (x, y)
     f_matrix = scaler.(data_matrix, scale_f)
 
-    itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    if interpolation_type == :linear
+        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    elseif interpolation_type == :cubic
+        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    else
+        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
+    end
 
     function func_interp(x::Real, y::Real)
         return un_scaler(itp(scaler(x, scale_x), scaler(y, scale_y)), scale_f)::Float64
@@ -303,6 +320,7 @@ function create_interpolation_3D_no_units(
     scale_y = :linear,
     scale_z = :linear,
     scale_f = :linear,
+    interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
 )
@@ -322,9 +340,9 @@ function create_interpolation_3D_no_units(
     end
 
     if isnothing(custom_name)
-        filename = "$(func_name)_data.jld"
+        filename = "$(func_name)_data.jld2"
     else
-        filename = "$(custom_name)_data.jld"
+        filename = "$(custom_name)_data.jld2"
     end
 
     filepath = "$(base_path)/$(filename)"
@@ -355,7 +373,7 @@ function create_interpolation_3D_no_units(
         if scale_x == :linear
             x = range(xmin, xmax, length = npoints_x)
         elseif scale_x == :log10
-            x = 10 .^ range(log10(xmin), log10(xmax), length = npoints_x)
+            x = range(log10(xmin), log10(xmax), length = npoints_x)
         else
             throw(ArgumentError("X scale $scale_x not supported"))
         end
@@ -363,7 +381,7 @@ function create_interpolation_3D_no_units(
         if scale_y == :linear
             y = range(ymin, ymax, length = npoints_y)
         elseif scale_y == :log10
-            y = 10 .^ range(log10(ymin), log10(ymax), length = npoints_y)
+            y = range(log10(ymin), log10(ymax), length = npoints_y)
         else
             throw(ArgumentError("Y scale $scale_y not supported"))
         end
@@ -371,7 +389,7 @@ function create_interpolation_3D_no_units(
         if scale_z == :linear
             z = range(zmin, zmax, length = npoints_z)
         elseif scale_z == :log10
-            z = 10 .^ range(log10(zmin), log10(zmax), length = npoints_z)
+            z = range(log10(zmin), log10(zmax), length = npoints_z)
         else
             throw(ArgumentError("Z scale $scale_z not supported"))
         end
@@ -390,7 +408,7 @@ function create_interpolation_3D_no_units(
         @threads for k = 1:npoints_z
             for j = 1:npoints_y
                 for i = 1:npoints_x
-                    data_matrix[i, j, k] = arg(x[i], y[j], z[k])
+                    data_matrix[i, j, k] = arg(un_scaler(x[i], scale_x), un_scaler(y[j], scale_y), un_scaler(z[k], scale_z))
                 end
                 next!(p)
             end
@@ -402,11 +420,12 @@ function create_interpolation_3D_no_units(
                 String,
                 Real,
                 Array{Float64},
+                StepRangeLen
             },
         }()
-        data_dict["x"] = collect(x)
-        data_dict["y"] = collect(y)
-        data_dict["z"] = collect(z)
+        data_dict["x"] = x
+        data_dict["y"] = y
+        data_dict["z"] = z
         data_dict["func"] = convert(Array{Float64}, data_matrix)
 
         data_dict["xmin"] = xmin
@@ -427,10 +446,16 @@ function create_interpolation_3D_no_units(
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
 
-    knots = (scaler.(x, scale_x), scaler.(y, scale_y), scaler.(z, scale_z))
+    knots = (x, y, z)
     f_matrix = scaler.(data_matrix, scale_f)
 
-    itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    if interpolation_type == :linear
+        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    elseif interpolation_type == :cubic
+        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+    else
+        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
+    end
 
     function func_interp(x::Real, y::Real, z::Real)
         return un_scaler(itp(scaler(x, scale_x), scaler(y, scale_y), scaler.(z, scale_z)), scale_f)::Float64
@@ -505,6 +530,7 @@ function create_interpolation_1D(
     npoints::Int,
     scale_x = :linear,
     scale_f = :linear,
+    interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
 ) where {T<:Union{Real,Quantity}}
@@ -523,6 +549,7 @@ function create_interpolation_1D(
             npoints = npoints,
             scale_x = scale_x,
             scale_f = scale_f,
+            interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
         )
@@ -548,6 +575,7 @@ function create_interpolation_1D(
             npoints = npoints,
             scale_x = scale_x,
             scale_f = scale_f,
+            interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
         )
@@ -571,6 +599,7 @@ function create_interpolation_2D(
     scale_x = :linear,
     scale_y = :linear,
     scale_f = :linear,
+    interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
@@ -594,6 +623,7 @@ function create_interpolation_2D(
             scale_x = scale_x,
             scale_y = scale_y,
             scale_f = scale_f,
+            interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
         )
@@ -625,6 +655,7 @@ function create_interpolation_2D(
             scale_x = scale_x,
             scale_y = scale_y,
             scale_f = scale_f,
+            interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
         )
@@ -652,6 +683,7 @@ function create_interpolation_3D(
     scale_y = :linear,
     scale_z = :linear,
     scale_f = :linear,
+    interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
@@ -680,6 +712,7 @@ function create_interpolation_3D(
             scale_y = scale_y,
             scale_z = scale_z,
             scale_f = scale_f,
+            interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
         )
@@ -717,6 +750,7 @@ function create_interpolation_3D(
             scale_y = scale_y,
             scale_z = scale_z,
             scale_f = scale_f,
+            interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
             kwargs...
         )
