@@ -1,7 +1,0 @@
-*.jl.*.cov
-*.jl.cov
-*.jl.mem
-*.jld2
-test.jl
-/Manifest.toml
-docs/Manifest.toml
