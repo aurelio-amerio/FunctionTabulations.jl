@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/aurelio-amerio/Tabulations.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/aurelio-amerio/Tabulations.jl/actions/workflows/CI.yml)
 [![Coverage](https://codecov.io/gh/aurelio-amerio/Tabulations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/aurelio-amerio/Tabulations.jl)
+[![][docs-stable-img]][docs-stable-url]
 
 This package is a wrapper around [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) to compute interpolation tables (tabulations) for functions of up to three variables with support for Unitful. 
 
@@ -182,3 +183,7 @@ itp_3d_1 = create_tabulation_3D(
 
 isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
 ```
+
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://aurelio-amerio.github.io/Tabulations.jl
