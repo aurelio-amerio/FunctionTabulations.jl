@@ -35,8 +35,6 @@ The routine will compute `npoints` values of the function in the range `xmin:xma
 Sometimes, it is more advantageous to tabulate a function using a logarithmic scale. For example, a function `y=f(x)` might display a more linear trend when the `x` or `f(x)` axis is expressed in logarithmic (`log10`) scale. In this case, it is possible to ask the routine to tabulate or interpolate that axis in logarithmic scale. For example, given the function `f(x)=10^x`, it is more advantageous to consider the `f(x)` axis in logarithmic scale for the interpolation:
 
 ```julia
-using Tabulations
-
 func_1D(x) = 10^x
 
 func_1D_tabulation = create_tabulation_1D(func_1D, xmin = 0.0, xmax = 3.0, npoints = 100, f_scale=:log10)
@@ -50,6 +48,8 @@ On the other hand, a function which needs to be interpolated in a wide range of 
 Tabulations.jl supports [Unitful.jl](https://github.com/PainterQubits/Unitful.jl). It is possible to tabulate functions which have variables of the `Quantity` type, and/or return quantities. This means that units of measurement are fully supported.
 
 ```julia
+using Unitful
+
 func_1d(x) = x^2
 
 itp_1d_1 = create_tabulation_1D(
