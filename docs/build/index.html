@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · Tabulations.jl</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="index.html"><img src="assets/logo.png" alt="Tabulations.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">Tabulations.jl</a></span></div><form class="docs-search" action="search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href="index.html">Home</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li class="toplevel"><a class="tocitem" href="#Usage:-1D-tabulations"><span>Usage: 1D tabulations</span></a></li><li><a class="tocitem" href="#Simple-usage"><span>Simple usage</span></a></li><li><a class="tocitem" href="#Logarithmic-scale"><span>Logarithmic scale</span></a></li><li><a class="tocitem" href="#Unitful-support"><span>Unitful support</span></a></li><li><a class="tocitem" href="#Save-location"><span>Save location</span></a></li><li><a class="tocitem" href="#Interpolation-options"><span>Interpolation options</span></a></li><li><a class="tocitem" href="#Extra-args-and-kwargs"><span>Extra <code>args</code> and <code>kwargs</code></span></a></li><li class="toplevel"><a class="tocitem" href="#Usage:-2D-tabulations-and-3D-tabulations"><span>Usage: 2D tabulations &amp; 3D tabulations</span></a></li></ul></li><li><a class="tocitem" href="functions.html">List of functions</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="index.html">Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="index.html">Home</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/aurelio-amerio/Tabulations.jl/blob/master/docs/src/index.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Tabulations"><a class="docs-heading-anchor" href="#Tabulations">Tabulations</a><a id="Tabulations-1"></a><a class="docs-heading-anchor-permalink" href="#Tabulations" title="Permalink"></a></h1><p><a href="https://github.com/aurelio-amerio/Tabulations.jl">Tabulation.jl</a> is a wrapper around <a href="https://github.com/JuliaMath/Interpolations.jl">Interpolations.jl</a> to compute interpolation tables (tabulations) for functions of up to three variables with support for Unitful. </p><p>This package stems from the common need in physics research projects to tabulate slow functions. With this package, it becomes possible to easily compute the values of a function and tabulate its values for up to three variables. </p><h1 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h1><pre><code class="language-julia hljs">using Pkg; Pkg.add(&quot;Tabulations&quot;)</code></pre><h1 id="Usage:-1D-tabulations"><a class="docs-heading-anchor" href="#Usage:-1D-tabulations">Usage: 1D tabulations</a><a id="Usage:-1D-tabulations-1"></a><a class="docs-heading-anchor-permalink" href="#Usage:-1D-tabulations" title="Permalink"></a></h1><h2 id="Simple-usage"><a class="docs-heading-anchor" href="#Simple-usage">Simple usage</a><a id="Simple-usage-1"></a><a class="docs-heading-anchor-permalink" href="#Simple-usage" title="Permalink"></a></h2><p>To compute and load the tabulation of a function with one variable, it is necessary to use <code>create_tabulation_1D</code>:</p><pre><code class="language-julia hljs">using Tabulations
+
+func_1D(x) = sin(x)
+
+sin_tabulation = create_tabulation_1D(func_1D, xmin = 0.0, xmax = 3.0, npoints = 100) # produces a file called `func_1D_data.jld2`
+
+isapprox(sin(3.0), sin_tabulation(3.0), rtol=1e-3)</code></pre><p>It is always necessary to specify the function to be tabulated, the interval and the number of points of the tabulation grid.  The routine will compute <code>npoints</code> values of the function in the range <code>xmin:xmax</code>, save the table in a <code>.jld2</code> file, and return the interpolating function of the tabulated data. If a proper <code>.jld2</code> file already exists for that function, and it was computed in the same <code>x</code> range with the same number of points <code>npoints</code>, it will automatically be loaded on subsequent calls of <code>compute_tabulation_1D</code>.</p><h2 id="Logarithmic-scale"><a class="docs-heading-anchor" href="#Logarithmic-scale">Logarithmic scale</a><a id="Logarithmic-scale-1"></a><a class="docs-heading-anchor-permalink" href="#Logarithmic-scale" title="Permalink"></a></h2><p>Sometimes, it is more advantageous to tabulate a function using a logarithmic scale. For example, a function <code>y=f(x)</code> might display a more linear trend when the <code>x</code> or <code>f(x)</code> axis is expressed in logarithmic (<code>log10</code>) scale. In this case, it is possible to ask the routine to tabulate or interpolate that axis in logarithmic scale. For example, given the function <code>f(x)=10^x</code>, it is more advantageous to consider the <code>f(x)</code> axis in logarithmic scale for the interpolation:</p><pre><code class="language-julia hljs">using Tabulations
+
+func_1D(x) = 10^x
+
+func_1D_tabulation = create_tabulation_1D(func_1D, xmin = 0.0, xmax = 3.0, npoints = 100, f_scale=:log10)
+
+isapprox(func_1D(3.0), func_1D_tabulation(3.0), rtol=1e-3)</code></pre><p>On the other hand, a function which needs to be interpolated in a wide range of <code>x</code> and does not vary harshly with <code>x</code> may benefit from the option <code>x_scale=:log10</code>.</p><h2 id="Unitful-support"><a class="docs-heading-anchor" href="#Unitful-support">Unitful support</a><a id="Unitful-support-1"></a><a class="docs-heading-anchor-permalink" href="#Unitful-support" title="Permalink"></a></h2><p>Tabulations.jl supports <a href="https://github.com/PainterQubits/Unitful.jl">Unitful.jl</a>. It is possible to tabulate functions which have variables of the <code>Quantity</code> type, and/or return quantities. This means that units of measurement are fully supported.</p><pre><code class="language-julia hljs">func_1d(x) = x^2
+
+itp_1d_1 = create_tabulation_1D(
+    func_1d,
+    custom_name = &quot;1d_1&quot;,
+    xmin = 0.0u&quot;m&quot;,
+    xmax = 3.0u&quot;m&quot;,
+    npoints = 100,
+    x_scale = :linear,
+    f_scale = :linear
+)
+
+isapprox(itp_1d_1(2.0u&quot;m&quot;), func_1d(2.0u&quot;m&quot;), rtol = 1e-3)
+    </code></pre><p>In the case of a tabulation with units of measurement, the unit of the result of the tabulated function is the one returned by <code>f(xmin)</code>. Nontheless, it supports automatic unit conversion for the input variables:</p><pre><code class="language-julia hljs">func_1d(x) = x^2
+
+itp_1d_1 = create_tabulation_1D(
+    func_1d,
+    custom_name = &quot;1d_1&quot;,
+    xmin = 0.0u&quot;m&quot;,
+    xmax = 3.0u&quot;m&quot;,
+    npoints = 100,
+    x_scale = :linear,
+    f_scale = :linear
+)
+
+isapprox(itp_1d_1(2.0u&quot;m&quot;), itp_1d_1(200.0u&quot;cm&quot;), rtol = 1e-3)
+    </code></pre><h2 id="Save-location"><a class="docs-heading-anchor" href="#Save-location">Save location</a><a id="Save-location-1"></a><a class="docs-heading-anchor-permalink" href="#Save-location" title="Permalink"></a></h2><p>It is possible to specify the folder where to save/load the interpolation using the option <code>jld_base_path</code>. Furthermore it is possible to specify the name of the file in which the interpolation will be stored using the option <code>custom_name</code>. Please note that the suffix <code>_data.jld2</code> will always be appended to the filename when the tabulation is stored. </p><pre><code class="language-julia hljs">func_1d(x) = sin(x)
+
+itp_1d_2 = create_tabulation_1D(
+    func_1d,
+    jld_base_path = &quot;interpolations&quot;,
+    custom_name = &quot;1d_2&quot;,
+    xmin = 0.0,
+    xmax = 3.0,
+    npoints = 100,
+) 
+# will generate a file called &quot;1d_2_data.jld2&quot; in the folder &quot;interpolations&quot;. 
+# If the folder doesn&#39;t exist, the routine will create it.</code></pre><h2 id="Interpolation-options"><a class="docs-heading-anchor" href="#Interpolation-options">Interpolation options</a><a id="Interpolation-options-1"></a><a class="docs-heading-anchor-permalink" href="#Interpolation-options" title="Permalink"></a></h2><p>It is possible to customize the behaviour of the interpolation of the tabulated grid using <code>interpolation_type</code> and <code>extrapolation_bc</code>. The default interpolation method is a linear interpolation (<code>:linear</code>), but it is also possible to use a cubic spline (<code>:cubic</code>). Furthermore, it is possible to specify the behaviour outside of the tabulation domain <code>(xmin, xmax)</code> using <code>extrapolation_bc</code>. The default behaviour is to throw an exception, but it is also possible for to extrapolate linearly:</p><pre><code class="language-julia hljs">using Interpolations: Line
+
+func_1d(x) = sin(x)
+
+itp_1d_1 = create_tabulation_1D(
+    func_1d,
+    xmin = 0.0,
+    xmax = 3.0,
+    npoints = 100,
+    x_scale = :linear,
+    f_scale = :linear,
+    interpolation_type = :linear,
+    extrapolation_bc = Line,
+)</code></pre><p>For more information about the extrapolation conditions, see the <a href="https://juliamath.github.io/Interpolations.jl/latest/extrapolation/">Interpolations.jl</a> documentation and pass the extrapolation function as the <code>extrapolation_bc</code> argument.</p><h2 id="Extra-args-and-kwargs"><a class="docs-heading-anchor" href="#Extra-args-and-kwargs">Extra <code>args</code> and <code>kwargs</code></a><a id="Extra-args-and-kwargs-1"></a><a class="docs-heading-anchor-permalink" href="#Extra-args-and-kwargs" title="Permalink"></a></h2><p>In case it is necessary to pass further fixed positional arguments or keyword arguments to the tabulated function, <code>create_tabulation_1D</code> will pass the extra <code>args</code> and <code>kwargs</code> to the function to be tabulated:</p><pre><code class="language-julia hljs">func_1d(x, a; b) = x^2 + a*b
+
+itp_1d_1 = create_tabulation_1D(
+    func_1d,
+    2, # the `a` positional argument 
+    xmin = 0.0,
+    xmax = 3.0,
+    npoints = 100,
+    b=1, # the `b` positional argument
+)
+
+isapprox(itp_1d_1(2.0), func_1d(2.0, 2; b=1), rtol = 1e-3)</code></pre><h1 id="Usage:-2D-tabulations-and-3D-tabulations"><a class="docs-heading-anchor" href="#Usage:-2D-tabulations-and-3D-tabulations">Usage: 2D tabulations &amp; 3D tabulations</a><a id="Usage:-2D-tabulations-and-3D-tabulations-1"></a><a class="docs-heading-anchor-permalink" href="#Usage:-2D-tabulations-and-3D-tabulations" title="Permalink"></a></h1><p>2D tabulations and 3D tabulations have a similar syntax, with extra parameters for the <code>y</code> and <code>z</code> variables:</p><pre><code class="language-julia hljs">func_2d(x, y) = sin(x) * sin(y)
+
+itp_2d_1 = create_tabulation_2D(
+    func_2d,
+    xmin = 0.0,
+    xmax = 1.0,
+    ymin = 0.0,
+    ymax = 2.0,
+    npoints_x = 100,
+    npoints_y = 200,
+    x_scale = :linear,
+    y_scale = :linear,
+    f_scale = :linear
+)
+isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)</code></pre><pre><code class="language-julia hljs">func_3d(x, y, z) = x * y + z
+
+itp_3d_1 = create_tabulation_3D(
+    func_3d,
+    xmin = 0.0,
+    xmax = 1.0,
+    ymin = 0.0,
+    ymax = 2.0,
+    zmin = 0.0,
+    zmax = 3.0,
+    npoints_x = 100,
+    npoints_y = 200,
+    npoints_z = 200,
+    x_scale = :linear,
+    y_scale = :linear,
+    z_scale = :linear,
+    f_scale = :linear
+)
+
+isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="functions.html">List of functions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 6 December 2021 11:25">Monday 6 December 2021</span>. Using Julia version 1.7.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
