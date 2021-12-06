@@ -10,7 +10,11 @@ export create_tabulation_1D, create_tabulation_2D, create_tabulation_3D
 
 # get_unit_annotation(x::Union{Quantity,FreeUnits}) = Quantity{T,dimension(x),W} where {T<:Real,W<:FreeUnits}
 
+"""
+    scaler(x::Real, scale::Symbol)
 
+Utility function to scale a variable, accepts :linear and :log10 scale
+"""
 function scaler(x::Real, scale::Symbol)
     if scale == :linear
         return x
@@ -21,6 +25,11 @@ function scaler(x::Real, scale::Symbol)
     end
 end
 
+"""
+    un_scaler(x::Real, scale::Symbol)
+
+Utility function to un_scale a variable, accepts :linear and :log10 scale
+"""
 function un_scaler(x::Real, scale::Symbol)
     if scale == :linear
         return x
@@ -31,6 +40,9 @@ function un_scaler(x::Real, scale::Symbol)
     end
 end
 
+"""
+Utility function to create an interpolation without units of measurement for 1D functions.
+"""
 function create_tabulation_1D_no_units(
     func::Function,
     args...;
@@ -39,7 +51,7 @@ function create_tabulation_1D_no_units(
     xmin::Real,
     xmax::Real,
     npoints::Int,
-    x_scale = :linear,
+    x_scale::Symbol = :linear,
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
@@ -158,6 +170,9 @@ function create_tabulation_1D_no_units(
     return func_interp::Function
 end
 
+"""
+Utility function to create an interpolation without units of measurement for 2D functions.
+"""
 function create_tabulation_2D_no_units(
     func::Function,
     args...;
@@ -169,8 +184,8 @@ function create_tabulation_2D_no_units(
     ymax::Real,
     npoints_x::Int,
     npoints_y::Int,
-    x_scale = :linear,
-    y_scale = :linear,
+    x_scale::Symbol = :linear,
+    y_scale::Symbol = :linear,
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
@@ -301,7 +316,9 @@ function create_tabulation_2D_no_units(
     return func_interp::Function
 end
 
-
+"""
+Utility function to create an interpolation without units of measurement for 3D functions.
+"""
 function create_tabulation_3D_no_units(
     func::Function,
     args...;
@@ -316,9 +333,9 @@ function create_tabulation_3D_no_units(
     npoints_x::Int,
     npoints_y::Int,
     npoints_z::Int,
-    x_scale = :linear,
-    y_scale = :linear,
-    z_scale = :linear,
+    x_scale::Symbol = :linear,
+    y_scale::Symbol = :linear,
+    z_scale::Symbol = :linear,
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
@@ -520,16 +537,84 @@ end
 
 ##### interpolations with units ######
 
+"""
+    create_tabulation_1D(
+        func::Function[,
+        args...];
+        xmin::T,
+        xmax::T,
+        npoints::Int[,
+        x_scale::Symbol = :linear,
+        f_scale = :linear,
+        jld_base_path = nothing,
+        custom_name = nothing,
+        interpolation_type = :linear,
+        extrapolation_bc = Throw,
+        kwargs...]
+    ) where {T<:Union{Real,Quantity}}
+
+Computes or loads the tabulation for a given function of the kind `f(x)`.
+
+# Arguments
+- `func::Function`: the function which should be tabulated. Must be of the kind `f(x)`
+- `xmin::Union{Real,Quantity}`: the minimum `x` for the range which will be covered by the tabulation
+- `xmax::Union{Real,Quantity}`: the maximum `x` for the range which will be covered by the tabulation
+- `npoints::Int`: the number of points for which `f(x)` will be computed
+- `x_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `x` points will be evenly spaced. If `:log10` is chosen, the points will be logarithmically spaced. Defaults to `:linear`
+- `f_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `f(x)` points will not be alterated. If `:log10` is chosen, log10 will be applied to the `f(x)` points before interpolating. Defaults to `:linear` 
+- `jld_base_path`: path to the folder where the tabulation should be saved. Defaults to the current folder
+- `custom_name`: custom name for the tabulation file, to which `_data.jld2` will be appended. Defaults to the name of the function to be tabulated
+- `interpolation_type`: Type of the spline to be used for interpolation. Can either be :linear (1st order spline) or :cubic (3rd order spline)
+- `extrapolation_bc`: behaviour of the tabulation outside of the boundaries defined by `[xmin, xmax]`. Possible behaviours are handled by Interpolations.jl and include `Throw`` (throws and eror if a value out of bounds is acessed) or `Line` (extrapolate linearly). Defaults to `Throw`
+- `args..., kwargs...`: additional `args` and `kwargs` will be passed to the function which is to be tabulated
+
+# Examples
+```jldoctest
+julia>  func_1d(x) = sin(x)
+
+julia>  itp_1d_1 = create_tabulation_1D(
+            func_1d,
+            xmin = 0.0,
+            xmax = 3.0,
+            npoints = 100,
+            x_scale = :linear,
+            f_scale = :linear
+        )
+
+julia>  isapprox(itp_1d_1(2.0), func_1d(2.0), rtol = 1e-3)
+true
+```
+
+Measurement units are supported too:
+
+```jldoctest
+julia>  using Unitful
+
+julia>  func_1d(x) = x^2
+
+julia>  itp_1d_1 = create_tabulation_1D(
+            func_1d,
+            xmin = 0.0u"m",
+            xmax = 3.0u"m",
+            npoints = 100,
+            x_scale = :linear,
+            f_scale = :linear
+        )
+
+julia>  isapprox(itp_1d_1(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+true
+```
+"""
 function create_tabulation_1D(
     func::Function,
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
     xmin::T,
     xmax::T,
     npoints::Int,
-    x_scale = :linear,
-    f_scale = :linear,
+    x_scale::Symbol = :linear,
+    f_scale::Symbol = :linear,
+    jld_base_path = nothing,
+    custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -585,20 +670,98 @@ function create_tabulation_1D(
     end
 end
 
+"""
+    create_tabulation_2D(
+        func::Function[,
+        args...];
+        xmin::T,
+        xmax::T,
+        ymin::V,
+        ymax::V,
+        npoints_x::Int,
+        npoints_y::Int[,
+        x_scale::Symbol = :linear,
+        y_scale::Symbol = :linear,
+        f_scale = :linear,
+        jld_base_path = nothing,
+        custom_name = nothing,
+        interpolation_type = :linear,
+        extrapolation_bc = Throw,
+        kwargs...]
+    ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
+
+Computes or loads the tabulation for a given function of the kind `f(x, y)`.
+
+# Arguments
+- `func::Function`: the function which should be tabulated. Must be of the kind `f(x, y)`
+- `xmin::Union{Real,Quantity}`: the minimum `x` for the range which will be covered by the tabulation
+- `xmax::Union{Real,Quantity}`: the maximum `x` for the range which will be covered by the tabulation
+- `ymin::Union{Real,Quantity}`: the minimum `y` for the range which will be covered by the tabulation
+- `ymax::Union{Real,Quantity}`: the maximum `y` for the range which will be covered by the tabulation
+- `npoints_x::Int`: the number of points along the `x` axis for which `f(x,y)` will be computed
+- `npoints_y::Int`: the number of points along the `y` axis for which `f(x,y)` will be computed
+- `x_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `x` points will be evenly spaced. If `:log10` is chosen, the points will be logarithmically spaced. Defaults to `:linear`
+- `y_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `y` points will be evenly spaced. If `:log10` is chosen, the points will be logarithmically spaced. Defaults to `:linear`
+- `f_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `f(x)` points will not be alterated. If `:log10` is chosen, log10 will be applied to the `f(x)` points before interpolating. Defaults to `:linear` 
+- `jld_base_path`: path to the folder where the tabulation should be saved. Defaults to the current folder
+- `custom_name`: custom name for the tabulation file, to which `_data.jld2` will be appended. Defaults to the name of the function to be tabulated
+- `interpolation_type`: Type of the spline to be used for interpolation. Can either be :linear (1st order spline) or :cubic (3rd order spline)
+- `extrapolation_bc`: behaviour of the tabulation outside of the boundaries defined by `[xmin, xmax]`. Possible behaviours are handled by Interpolations.jl and include `Throw`` (throws and eror if a value out of bounds is acessed) or `Line` (extrapolate linearly). Defaults to `Throw`
+- `args..., kwargs...`: additional `args` and `kwargs` will be passed to the function which is to be tabulated
+
+# Examples
+```jldoctest
+julia>  func_2d(x, y) = sin(x) * sin(y)
+
+julia>  itp_2d_1 = create_tabulation_2D(
+            func_2d,
+            xmin = 0.0,
+            xmax = 1.0,
+            ymin = 0.0,
+            ymax = 2.0,
+            npoints_x = 100,
+            npoints_y = 100,
+        )
+
+julia>  isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+true
+```
+
+Measurement units are supported too:
+
+```jldoctest
+julia>  using Unitful
+
+julia>  func_2d(x, y) = x^2 + y
+
+julia>  itp_2d_1 = create_tabulation_2D(
+            func_2d,
+            xmin = 0.0u"m",
+            xmax = 1.0u"m",
+            ymin = 0.0u"m^2",
+            ymax = 2.0u"m^2",
+            npoints_x = 100,
+            npoints_y = 100,
+        )
+
+julia>  isapprox(itp_2d_1(1.0u"m", 1.3u"m^2"), func_2d(1.0u"m", 1.3u"m^2"), rtol = 1e-3)
+true
+```
+"""
 function create_tabulation_2D(
     func::Function,
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
     xmin::T,
     xmax::T,
     ymin::V,
     ymax::V,
     npoints_x::Int,
     npoints_y::Int,
-    x_scale = :linear,
-    y_scale = :linear,
+    x_scale::Symbol = :linear,
+    y_scale::Symbol = :linear,
     f_scale = :linear,
+    jld_base_path = nothing,
+    custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...
@@ -665,11 +828,101 @@ function create_tabulation_2D(
     end
 end
 
+"""
+    create_tabulation_3D(
+        func::Function[,
+        args...];
+        xmin::T,
+        xmax::T,
+        ymin::V,
+        ymax::V,
+        zmin::W,
+        zmax::W,
+        npoints_x::Int,
+        npoints_y::Int,
+        npoints_z::Int[,
+        x_scale::Symbol = :linear,
+        y_scale::Symbol = :linear,
+        z_scale::Symbol = :linear,
+        f_scale = :linear,
+        jld_base_path = nothing,
+        custom_name = nothing,
+        interpolation_type = :linear,
+        extrapolation_bc = Throw,
+        kwargs...]
+    ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
+
+Computes or loads the tabulation for a given function of the kind `f(x, y, z)`.
+
+# Arguments
+- `func::Function`: the function which should be tabulated. Must be of the kind `f(x, y)`
+- `xmin::Union{Real,Quantity}`: the minimum `x` for the range which will be covered by the tabulation
+- `xmax::Union{Real,Quantity}`: the maximum `x` for the range which will be covered by the tabulation
+- `ymin::Union{Real,Quantity}`: the minimum `y` for the range which will be covered by the tabulation
+- `ymax::Union{Real,Quantity}`: the maximum `y` for the range which will be covered by the tabulation
+- `zmin::Union{Real,Quantity}`: the minimum `z` for the range which will be covered by the tabulation
+- `zmax::Union{Real,Quantity}`: the maximum `z` for the range which will be covered by the tabulation
+- `npoints_x::Int`: the number of points along the `x` axis for which `f(x,y,z)` will be computed
+- `npoints_y::Int`: the number of points along the `y` axis for which `f(x,y,z)` will be computed
+- `npoints_z::Int`: the number of points along the `z` axis for which `f(x,y,z)` will be computed
+- `x_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `x` points will be evenly spaced. If `:log10` is chosen, the points will be logarithmically spaced. Defaults to `:linear`
+- `y_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `y` points will be evenly spaced. If `:log10` is chosen, the points will be logarithmically spaced. Defaults to `:linear`
+- `z_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `z` points will be evenly spaced. If `:log10` is chosen, the points will be logarithmically spaced. Defaults to `:linear`
+- `f_scale::Symbol`: the scale which will be used for tabulation. If `:linear` is choosen, the `f(x)` points will not be alterated. If `:log10` is chosen, log10 will be applied to the `f(x)` points before interpolating. Defaults to `:linear` 
+- `jld_base_path`: path to the folder where the tabulation should be saved. Defaults to the current folder
+- `custom_name`: custom name for the tabulation file, to which `_data.jld2` will be appended. Defaults to the name of the function to be tabulated
+- `interpolation_type`: Type of the spline to be used for interpolation. Can either be :linear (1st order spline) or :cubic (3rd order spline)
+- `extrapolation_bc`: behaviour of the tabulation outside of the boundaries defined by `[xmin, xmax]`. Possible behaviours are handled by Interpolations.jl and include `Throw`` (throws and eror if a value out of bounds is acessed) or `Line` (extrapolate linearly). Defaults to `Throw`
+- `args..., kwargs...`: additional `args` and `kwargs` will be passed to the function which is to be tabulated
+
+# Examples
+```jldoctest
+julia>  func_3d(x, y, z) = x * y + z
+
+julia>  itp_3d_1 = create_tabulation_3D(
+            func_3d,
+            xmin = 0.0,
+            xmax = 1.0,
+            ymin = 0.0,
+            ymax = 2.0,
+            zmin = 0.0,
+            zmax = 3.0,
+            npoints_x = 100,
+            npoints_y = 100,
+            npoints_z = 100,
+        )
+
+julia>  isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
+true
+```
+
+Measurement units are supported too:
+
+```jldoctest
+julia>  using Unitful
+
+julia>  func_3d(x, y, z) = x * y + z
+
+julia>  itp_3d_1 = create_tabulation_3D(
+            func_3d,
+            xmin = 0.0u"m",
+            xmax = 1.0u"m",
+            ymin = 0.0"s^-1",
+            ymax = 2.0"s^-1",
+            zmin = 0.0u"m/s",
+            zmax = 3.0u"m/s",
+            npoints_x = 100,
+            npoints_y = 100,
+            npoints_z = 100,
+        )
+
+julia>  isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-3)
+true
+```
+"""
 function create_tabulation_3D(
     func::Function,
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
     xmin::T,
     xmax::T,
     ymin::V,
@@ -679,10 +932,12 @@ function create_tabulation_3D(
     npoints_x::Int,
     npoints_y::Int,
     npoints_z::Int,
-    x_scale = :linear,
-    y_scale = :linear,
-    z_scale = :linear,
+    x_scale::Symbol = :linear,
+    y_scale::Symbol = :linear,
+    z_scale::Symbol = :linear,
     f_scale = :linear,
+    jld_base_path = nothing,
+    custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
     kwargs...

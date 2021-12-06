@@ -4,3 +4,5 @@
 *.jld2
 test.jl
 /Manifest.toml
+docs/build/*
+docs/Manifest.toml
