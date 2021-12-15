@@ -3,5 +3,5 @@
 ```
 
 ```@autodocs
-Modules = [Tabulations]
+Modules = [FunctionTabulations]
 ```

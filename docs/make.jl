@@ -1,13 +1,13 @@
-using Tabulations
+using FunctionTabulations
 using Documenter
 
-DocMeta.setdocmeta!(Tabulations, :DocTestSetup, :(using Tabulations); recursive=true)
+DocMeta.setdocmeta!(FunctionTabulations, :DocTestSetup, :(using FunctionTabulations); recursive=true)
 
 makedocs(;
-    modules=[Tabulations],
+    modules=[FunctionTabulations],
     authors="Aurelio Amerio <aurelio.amerio@edu.unito.it> and contributors",
-    repo="https://github.com/aurelio-amerio/Tabulations.jl/blob/{commit}{path}#{line}",
-    sitename="Tabulations.jl",
+    repo="https://github.com/aurelio-amerio/FunctionTabulations.jl/blob/{commit}{path}#{line}",
+    sitename="FunctionTabulations.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         assets=String[],

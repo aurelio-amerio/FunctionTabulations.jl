@@ -1,25 +1,25 @@
 ```@meta
-CurrentModule = Tabulations
+CurrentModule = FunctionTabulations
 ```
 
-# Tabulations
+# FunctionTabulations
 
-[Tabulation.jl](https://github.com/aurelio-amerio/Tabulations.jl) is a wrapper around [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) to compute interpolation tables (tabulations) for functions of up to three variables with support for Unitful. 
+[Tabulation.jl](https://github.com/aurelio-amerio/FunctionTabulations.jl) is a wrapper around [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) to compute interpolation tables (FunctionTabulations) for functions of up to three variables with support for Unitful. 
 
 This package stems from the common need in physics research projects to tabulate slow functions. With this package, it becomes possible to easily compute the values of a function and tabulate its values for up to three variables. 
 
 # Installation
 ```julia
-using Pkg; Pkg.add("Tabulations")
+using Pkg; Pkg.add("FunctionTabulations")
 ```
 
 
-# Usage: 1D tabulations
+# Usage: 1D FunctionTabulations
 ## Simple usage
 To compute and load the tabulation of a function with one variable, it is necessary to use `create_tabulation_1D`:
 
 ```julia
-using Tabulations
+using FunctionTabulations
 
 func_1D(x) = sin(x)
 
@@ -45,7 +45,7 @@ isapprox(func_1D(3.0), func_1D_tabulation(3.0), rtol=1e-3)
 On the other hand, a function which needs to be interpolated in a wide range of `x` and does not vary harshly with `x` may benefit from the option `x_scale=:log10`.
 
 ## Unitful support 
-Tabulations.jl supports [Unitful.jl](https://github.com/PainterQubits/Unitful.jl). It is possible to tabulate functions which have variables of the `Quantity` type, and/or return quantities. This means that units of measurement are fully supported.
+FunctionTabulations.jl supports [Unitful.jl](https://github.com/PainterQubits/Unitful.jl). It is possible to tabulate functions which have variables of the `Quantity` type, and/or return quantities. This means that units of measurement are fully supported.
 
 ```julia
 using Unitful
@@ -140,8 +140,8 @@ itp_1d_1 = create_tabulation_1D(
 isapprox(itp_1d_1(2.0), func_1d(2.0, 2; b=1), rtol = 1e-3)
 ```
 
-# Usage: 2D tabulations & 3D tabulations
-2D tabulations and 3D tabulations have a similar syntax, with extra parameters for the `y` and `z` variables:
+# Usage: 2D FunctionTabulations & 3D FunctionTabulations
+2D FunctionTabulations and 3D FunctionTabulations have a similar syntax, with extra parameters for the `y` and `z` variables:
 
 ```julia
 func_2d(x, y) = sin(x) * sin(y)

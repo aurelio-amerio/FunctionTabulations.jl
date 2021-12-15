@@ -1,4 +1,4 @@
-module Tabulations
+module FunctionTabulations
 using Interpolations
 using JLD2
 using ProgressMeter

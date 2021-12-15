@@ -1,4 +1,4 @@
-using Tabulations
+using FunctionTabulations
 using Unitful
 using Test
 
@@ -445,8 +445,8 @@ end
     func_2d(x, y) = sin(x) * sin(y)
     func_3d(x, y, z) = x * y + z
 
-    @test_throws ArgumentError Tabulations.scaler(1.0, :nan)
-    @test_throws ArgumentError Tabulations.un_scaler(1.0, :nan)
+    @test_throws ArgumentError FunctionTabulations.scaler(1.0, :nan)
+    @test_throws ArgumentError FunctionTabulations.un_scaler(1.0, :nan)
 
     @test_throws ArgumentError create_tabulation_1D(
         func_1d,
