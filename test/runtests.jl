@@ -28,8 +28,31 @@ using Test
         f_scale = :log10
     )
 
+    itp_1d_3 = create_tabulation_1D(
+        func_1d,
+        jld_base_path = "interpolations",
+        custom_name = "1d_3",
+        collect(range(0,3,length=100)),
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_1d_4 = create_tabulation_1D(
+        func_1d,
+        10 .^ collect(range(log10(1e-1),log10(3),length=100)),
+        jld_base_path = "interpolations",
+        custom_name = "1d_4",
+        x_scale = :log10,
+        f_scale = :log10
+    )
+
+
     @test isapprox(itp_1d_1(2.0), func_1d(2.0), rtol = 1e-3)
     @test isapprox(itp_1d_2(2.0), func_1d(2.0), rtol = 1e-3)
+    @test isapprox(itp_1d_3(2.0), func_1d(2.0), rtol = 1e-3)
+    @test isapprox(itp_1d_4(2.0), func_1d(2.0), rtol = 1e-3)
+
+    @test isapprox(itp_1d_1(2.0), itp_1d_3(2.0), rtol = 1e-6)
 
     # load interpolations and test them
 
@@ -54,11 +77,35 @@ using Test
         f_scale = :log10
     )
 
+    itp_1d_3 = create_tabulation_1D(
+        func_1d,
+        jld_base_path = "interpolations",
+        custom_name = "1d_3",
+        collect(range(0,3,length=100)),
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_1d_4 = create_tabulation_1D(
+        func_1d,
+        10 .^ collect(range(log10(1e-1),log10(3),length=100)),
+        jld_base_path = "interpolations",
+        custom_name = "1d_4",
+        x_scale = :log10,
+        f_scale = :log10
+    )
+
     @test isapprox(itp_1d_1(2.0), func_1d(2.0), rtol = 1e-3)
     @test isapprox(itp_1d_2(2.0), func_1d(2.0), rtol = 1e-3)
+    @test isapprox(itp_1d_3(2.0), func_1d(2.0), rtol = 1e-3)
+    @test isapprox(itp_1d_4(2.0), func_1d(2.0), rtol = 1e-3)
+
+    @test isapprox(itp_1d_1(2.0), itp_1d_3(2.0), rtol = 1e-6)
 
     rm("func_1d_data.jld2")
     rm("interpolations/1d_2_data.jld2")
+    rm("interpolations/1d_3_data.jld2")
+    rm("interpolations/1d_4_data.jld2")
     rm("interpolations")
 end
 
@@ -87,8 +134,29 @@ end
         f_scale = :log10
     )
 
+    itp_1d_3 = create_tabulation_1D(
+        func_1d,
+        collect(range(0,3,length=100))*u"m",
+        custom_name = "1d_3",
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_1d_4 = create_tabulation_1D(
+        func_1d,
+        10 .^ collect(range(log10(1e-1),log10(3),length=100))*u"m",
+        custom_name = "1d_4",
+        x_scale = :log10,
+        f_scale = :log10
+    )
+
     @test isapprox(itp_1d_1(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
     @test isapprox(itp_1d_2(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+    @test isapprox(itp_1d_3(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+    @test isapprox(itp_1d_4(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+
+    @test isapprox(itp_1d_1(2.0u"m"), itp_1d_3(2.0u"m"), rtol = 1e-6)
+    
 
     # load interpolations and test them
 
@@ -112,11 +180,34 @@ end
         f_scale = :log10
     )
 
+    itp_1d_3 = create_tabulation_1D(
+        func_1d,
+        collect(range(0,3,length=100))*u"m",
+        custom_name = "1d_3",
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_1d_4 = create_tabulation_1D(
+        func_1d,
+        10 .^ collect(range(log10(1e-1),log10(3),length=100))*u"m",
+        custom_name = "1d_4",
+        x_scale = :log10,
+        f_scale = :log10
+    )
+
     @test isapprox(itp_1d_1(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
     @test isapprox(itp_1d_2(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+    @test isapprox(itp_1d_3(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+    @test isapprox(itp_1d_4(2.0u"m"), func_1d(2.0u"m"), rtol = 1e-3)
+
+    @test isapprox(itp_1d_1(2.0u"m"), itp_1d_3(2.0u"m"), rtol = 1e-6)
+    
 
     rm("1d_1_data.jld2")
     rm("1d_2_data.jld2")
+    rm("1d_3_data.jld2")
+    rm("1d_4_data.jld2")
 end
 
 @testset "create_tabulation_2D_no_units" begin
@@ -152,8 +243,35 @@ end
         y_scale = :log10,
         f_scale = :log10
     )
+
+    itp_2d_3 = create_tabulation_2D(
+        func_2d,
+        collect(range(0,1,length=100)),
+        collect(range(0,2,length=200)),
+        custom_name = "2d_3",
+        jld_base_path = "interpolations",
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_2d_4 = create_tabulation_2D(
+        func_2d,
+        10 .^collect(range(log10(1e-1),log10(1),length=100)),
+        10 .^collect(range(log10(1e-1),log10(2),length=200)),
+        custom_name = "2d_4",
+        jld_base_path = "interpolations",
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
+    )
+
     @test isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+    @test isapprox(itp_2d_3(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+    @test isapprox(itp_2d_4(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+
+    @test isapprox(itp_2d_1(1.0, 1.3), itp_2d_3(1.0, 1.3), rtol = 1e-3)
 
     # load interpolations and test them
 
@@ -185,11 +303,40 @@ end
         y_scale = :log10,
         f_scale = :log10
     )
+
+    itp_2d_3 = create_tabulation_2D(
+        func_2d,
+        collect(range(0,1,length=100)),
+        collect(range(0,2,length=200)),
+        custom_name = "2d_3",
+        jld_base_path = "interpolations",
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_2d_4 = create_tabulation_2D(
+        func_2d,
+        10 .^ collect(range(log10(1e-1),log10(1),length=100)),
+        10 .^ collect(range(log10(1e-1),log10(2),length=200)),
+        custom_name = "2d_4",
+        jld_base_path = "interpolations",
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
+    )
+
     @test isapprox(itp_2d_1(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+    @test isapprox(itp_2d_3(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+    @test isapprox(itp_2d_4(1.0, 1.3), func_2d(1.0, 1.3), rtol = 1e-3)
+
+    @test isapprox(itp_2d_1(1.0, 1.3), itp_2d_3(1.0, 1.3), rtol = 1e-3)
 
     rm("func_2d_data.jld2")
     rm("interpolations/2d_2_data.jld2")
+    rm("interpolations/2d_3_data.jld2")
+    rm("interpolations/2d_4_data.jld2")
     rm("interpolations")
 end
 
@@ -225,8 +372,32 @@ end
         y_scale = :log10,
         f_scale = :log10
     )
+
+    itp_2d_3 = create_tabulation_2D(
+        func_2d,
+        collect(range(0,1,length=100))*u"m",
+        collect(range(0,2,length=200))*u"s",
+        custom_name = "2d_3",
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_2d_4 = create_tabulation_2D(
+        func_2d,
+        custom_name = "2d_4",
+        10 .^ collect(range(log10(1e-1),log10(1),length=100))*u"m",
+        10 .^ collect(range(log10(1e-1),log10(2),length=200))*u"s",
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
+    )
     @test isapprox(itp_2d_1(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
+    @test isapprox(itp_2d_3(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
+    @test isapprox(itp_2d_4(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
+
+    @test isapprox(itp_2d_1(1.0u"m", 1.3u"s"), itp_2d_3(1.0u"m", 1.3u"s"), rtol = 1e-3)
 
     # load interpolations and test them
 
@@ -257,11 +428,36 @@ end
         y_scale = :log10,
         f_scale = :log10
     )
+    itp_2d_3 = create_tabulation_2D(
+        func_2d,
+        collect(range(0,1,length=100))*u"m",
+        collect(range(0,2,length=200))*u"s",
+        custom_name = "2d_3",
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_2d_4 = create_tabulation_2D(
+        func_2d,
+        custom_name = "2d_4",
+        10 .^ collect(range(log10(1e-1),log10(1),length=100))*u"m",
+        10 .^ collect(range(log10(1e-1),log10(2),length=200))*u"s",
+        x_scale = :log10,
+        y_scale = :log10,
+        f_scale = :log10
+    )
     @test isapprox(itp_2d_1(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
     @test isapprox(itp_2d_2(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
+    @test isapprox(itp_2d_3(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
+    @test isapprox(itp_2d_4(1.0u"m", 1.3u"s"), func_2d(1.0u"m", 1.3u"s"), rtol = 1e-3)
+
+    @test isapprox(itp_2d_1(1.0u"m", 1.3u"s"), itp_2d_3(1.0u"m", 1.3u"s"), rtol = 1e-3)
 
     rm("2d_1_data.jld2")
     rm("2d_2_data.jld2")
+    rm("2d_3_data.jld2")
+    rm("2d_4_data.jld2")
 end
 
 @testset "create_tabulation_3D_no_units" begin
@@ -304,8 +500,38 @@ end
         z_scale = :log10,
         f_scale = :log10
     )
+
+    itp_3d_3 = create_tabulation_3D(
+        func_3d,
+        jld_base_path = "interpolations",
+        custom_name = "3d_3",
+        collect(range(0,1,length=100)),
+        collect(range(0,2,length=200)),
+        collect(range(0,3,length=200)),
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_3d_4 = create_tabulation_3D(
+        func_3d,
+        10 .^ collect(range(log10(1e-1),log10(1),length=100)),
+        10 .^ collect(range(log10(1e-1),log10(2),length=200)),
+        10 .^ collect(range(log10(1e-1),log10(3),length=200)),
+        jld_base_path = "interpolations",
+        custom_name = "3d_4",
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
+    )
     @test isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
+    @test isapprox(itp_3d_3(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
+    @test isapprox(itp_3d_4(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
+
+    @test isapprox(itp_3d_1(1.0, 1.3, 2.5), itp_3d_3(1.0, 1.3, 2.5), rtol = 1e-2)
 
     # load interpolations and test them
 
@@ -345,11 +571,42 @@ end
         z_scale = :log10,
         f_scale = :log10
     )
+    itp_3d_3 = create_tabulation_3D(
+        func_3d,
+        jld_base_path = "interpolations",
+        custom_name = "3d_3",
+        collect(range(0,1,length=100)),
+        collect(range(0,2,length=200)),
+        collect(range(0,3,length=200)),
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
+    )
+
+    itp_3d_4 = create_tabulation_3D(
+        func_3d,
+        10 .^ collect(range(log10(1e-1),log10(1),length=100)),
+        10 .^ collect(range(log10(1e-1),log10(2),length=200)),
+        10 .^ collect(range(log10(1e-1),log10(3),length=200)),
+        jld_base_path = "interpolations",
+        custom_name = "3d_4",
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
+    )
     @test isapprox(itp_3d_1(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
+    @test isapprox(itp_3d_3(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
+    @test isapprox(itp_3d_4(1.0, 1.3, 2.5), func_3d(1.0, 1.3, 2.5), rtol = 1e-2)
+
+    @test isapprox(itp_3d_1(1.0, 1.3, 2.5), itp_3d_3(1.0, 1.3, 2.5), rtol = 1e-2)
 
     rm("func_3d_data.jld2")
     rm("interpolations/3d_2_data.jld2")
+    rm("interpolations/3d_3_data.jld2")
+    rm("interpolations/3d_4_data.jld2")
     rm("interpolations")
 end
 
@@ -393,8 +650,35 @@ end
         z_scale = :log10,
         f_scale = :log10
     )
+
+    itp_3d_3 = create_tabulation_3D(
+        func_3d,
+        collect(range(0,1,length=100))*u"m",
+        collect(range(0,2,length=200))*u"s^-1",
+        collect(range(0,3,length=200))*u"m/s",
+        custom_name = "3d_3",
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
+    )
+    itp_3d_4 = create_tabulation_3D(
+        func_3d,
+        10 .^ collect(range(log10(1e-1),log10(1),length=100))*u"m",
+        10 .^ collect(range(log10(1e-1),log10(2),length=200))*u"s^-1",
+        10 .^ collect(range(log10(1e-1),log10(3),length=200))*u"m/s",
+        custom_name = "3d_4",
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
+    )
     @test isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
+    @test isapprox(itp_3d_3(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
+    @test isapprox(itp_3d_4(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
+
+    @test isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), itp_3d_3(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
 
     # load interpolations and test them
 
@@ -433,11 +717,40 @@ end
         z_scale = :log10,
         f_scale = :log10
     )
+
+    itp_3d_3 = create_tabulation_3D(
+        func_3d,
+        collect(range(0,1,length=100))*u"m",
+        collect(range(0,2,length=200))*u"s^-1",
+        collect(range(0,3,length=200))*u"m/s",
+        custom_name = "3d_3",
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
+    )
+    itp_3d_4 = create_tabulation_3D(
+        func_3d,
+        10 .^ collect(range(log10(1e-1),log10(1),length=100))*u"m",
+        10 .^ collect(range(log10(1e-1),log10(2),length=200))*u"s^-1",
+        10 .^ collect(range(log10(1e-1),log10(3),length=200))*u"m/s",
+        custom_name = "3d_4",
+        x_scale = :log10,
+        y_scale = :log10,
+        z_scale = :log10,
+        f_scale = :log10
+    )
     @test isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-3)
     @test isapprox(itp_3d_2(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
+    @test isapprox(itp_3d_3(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
+    @test isapprox(itp_3d_4(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), func_3d(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
+
+    @test isapprox(itp_3d_1(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), itp_3d_3(1.0u"m", 1.3u"s^-1", 2.5u"m/s"), rtol = 1e-2)
 
     rm("3d_1_data.jld2")
     rm("3d_2_data.jld2")
+    rm("3d_3_data.jld2")
+    rm("3d_4_data.jld2")
 end
 
 @testset "errors" begin
