@@ -2,6 +2,7 @@
 *.jl.cov
 *.jl.mem
 *.jld2
+.vscode/*
 test.jl
 /Manifest.toml
 docs/build/*
