@@ -59,11 +59,12 @@ Compares the SHA of the `func` funtion with the provided SHA.
 """
 function test_sha(func::Function, sha::String; mode::Symbol = :warn)
     func_sha = compute_SHA(func)
+    func_name = nameof(func)
     if sha != func_sha
         if mode == :warn
-            @warn "The SHA for $func did not match the one of the stored tabulated function. Please check if the function definition has changed."
+            @warn "The SHA for `$func_name` did not match the one of the stored tabulated function. Please check if the function definition has changed."
         elseif mode == :throw
-            @error "The SHA for $func did not match the one of the stored tabulated function. Please check if the function definition has changed."
+            @error "The SHA for `$func_name` did not match the one of the stored tabulated function. Please check if the function definition has changed."
         elseif mode == :none
         else
             @error "Mode not supported. Got $mode"
