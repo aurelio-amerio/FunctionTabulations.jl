@@ -67,7 +67,7 @@ function test_sha(func::Function, sha::String; mode::Symbol = :warn)
             @error "The SHA for `$func_name` did not match the one of the stored tabulated function. Please check if the function definition has changed."
         elseif mode == :none
         else
-            @error "Mode not supported. Got $mode"
+            @error "Mode not supported. Got $(mode)."
         end
     end
 end
