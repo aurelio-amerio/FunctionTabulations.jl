@@ -2,6 +2,112 @@ using FunctionTabulations
 using Unitful
 using Test
 
+@testset "warning" begin
+    func_1d(x) = sin(x)
+
+    # create interpolations and test them
+
+    itp_1d_1 = create_tabulation_1D(
+        func_1d,
+        xmin = 0.0,
+        xmax = 3.0,
+        npoints = 100,
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    func_1d(x) = sin(x)^2 + 3
+
+    @test_logs (:warn,"The SHA for `func_1d` did not match the one of the stored tabulated function. Please check if the function definition has changed.") match_mode=:any create_tabulation_1D(
+        func_1d,
+        xmin = 0.0,
+        xmax = 3.0,
+        npoints = 100,
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    rm("func_1d_data.jld2")
+
+    func_2d(x, y) = sin(x) * sin(y)
+
+    # create interpolations and test them
+
+    itp_2d_1 = create_tabulation_2D(
+        func_2d,
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
+    )
+
+    func_2d(x, y) = sin(x) * sin(y) * 3
+
+    # create interpolations and test them
+
+    @test_logs (:warn,"The SHA for `func_2d` did not match the one of the stored tabulated function. Please check if the function definition has changed.") match_mode=:any create_tabulation_2D(
+        func_2d,
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        x_scale = :linear,
+        y_scale = :linear,
+        f_scale = :linear
+    )
+
+    rm("func_2d_data.jld2")
+
+    func_3d(x, y, z) = x * y + z
+
+    # create interpolations and test them
+    itp_3d_1 = create_tabulation_3D(
+        func_3d,
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        zmin = 0.0,
+        zmax = 3.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        npoints_z = 200,
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
+    )
+
+    func_3d(x, y, z) = x * y + z + 3
+
+    # create interpolations and test them
+    @test_logs (:warn,"The SHA for `func_3d` did not match the one of the stored tabulated function. Please check if the function definition has changed.") match_mode=:any create_tabulation_3D(
+        func_3d,
+        xmin = 0.0,
+        xmax = 1.0,
+        ymin = 0.0,
+        ymax = 2.0,
+        zmin = 0.0,
+        zmax = 3.0,
+        npoints_x = 100,
+        npoints_y = 200,
+        npoints_z = 200,
+        x_scale = :linear,
+        y_scale = :linear,
+        z_scale = :linear,
+        f_scale = :linear
+    )
+
+    rm("func_3d_data.jld2")
+end
+
 @testset "create_tabulation_1D_no_units" begin
     func_1d(x) = sin(x)
 
@@ -928,29 +1034,5 @@ end
 end
 
 
-@testset "warning" begin
-    func_1d(x) = sin(x)
 
-    # create interpolations and test them
 
-    itp_1d_1 = create_tabulation_1D(
-        func_1d,
-        xmin = 0.0,
-        xmax = 3.0,
-        npoints = 100,
-        x_scale = :linear,
-        f_scale = :linear
-    )
-
-    func_1d(x) = sin(x)^2 + 3
-
-    @test_logs (:warn,"The SHA for `$(nameof(func_1d))` did not match the one of the stored tabulated function. Please check if the function definition has changed.") create_tabulation_1D(
-        func_1d,
-        xmin = 0.0,
-        xmax = 3.0,
-        npoints = 100,
-        x_scale = :linear,
-        f_scale = :linear
-    )
-    rm("func_1d_data.jld2")
-end
