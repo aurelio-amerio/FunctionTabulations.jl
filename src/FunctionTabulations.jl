@@ -5,6 +5,8 @@ using ProgressMeter
 using Unitful
 using Unitful: FreeUnits
 using Base.Threads
+using SHA: sha256
+
 
 export create_tabulation_1D, create_tabulation_2D, create_tabulation_3D
 
@@ -40,6 +42,41 @@ function un_scaler(x::Real, scale::Symbol)
     end
 end
 
+function compute_SHA(func)
+    c1 = code_lowered(func)
+    h1 = bytes2hex(sha256(string(c1)))
+    return h1
+end
+
+function test_sha(func, sha; mode = :warn)
+    func_sha = compute_SHA(func)
+    if sha != func_sha
+        if mode == :warn
+            @warn "The SHA for $func did not match the one of the stored tabulated function. Please check if the function definition has changed."
+        elseif mode == :throw
+            @error "The SHA for $func did not match the one of the stored tabulated function. Please check if the function definition has changed."
+        elseif mode == :none
+        else
+            @error "mode not supported."
+        end
+    end
+end
+
+function test_sha_jld2_container(func, file; mode = :warn)
+    data_dict = load(file)
+    sha = data_dict["sha"]
+    func_sha = compute_SHA(func)
+    if sha != func_sha
+        if mode == :warn
+            @warn "The SHA for $func did not match the one of the stored tabulated function. Please check if the function definition has changed."
+        elseif mode == :throw
+            @error "The SHA for $func did not match the one of the stored tabulated function. Please check if the function definition has changed."
+        elseif mode == :none
+        else
+            @error "mode not supported."
+        end
+    end
+end
 """
 Utility function to create an interpolation without units of measurement for 1D functions.
 """
@@ -55,6 +92,8 @@ function create_tabulation_1D_no_units(
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 )
 
@@ -95,7 +134,12 @@ function create_tabulation_1D_no_units(
 
     if load_file()
         data = load(filepath)
+
         @info "$(filename) loaded!"
+        if check_SHA
+            func_sha = data["sha"]
+            test_sha(func, func_sha, mode = check_SHA_mode)
+        end
         x = data["x"]
 
         data_matrix = data["func"]
@@ -136,9 +180,10 @@ function create_tabulation_1D_no_units(
                 StepRangeLen
             },
         }()
+        sha = compute_SHA(func)
         data_dict["x"] = x
         data_dict["func"] = convert(Array{Float64}, data_matrix)
-
+        data_dict["sha"] = sha
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
         data_dict["npoints"] = npoints
@@ -180,6 +225,8 @@ function create_tabulation_1D_no_units(
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Real}
 
@@ -226,6 +273,10 @@ function create_tabulation_1D_no_units(
     if load_file()
         data = load(filepath)
         @info "$(filename) loaded!"
+        if check_SHA
+            func_sha = data["sha"]
+            test_sha(func, func_sha, mode = check_SHA_mode)
+        end
         x = data["x"]
 
         data_matrix = data["func"]
@@ -258,9 +309,10 @@ function create_tabulation_1D_no_units(
                 StepRangeLen
             },
         }()
+        sha = compute_SHA(func)
         data_dict["x"] = x
         data_dict["func"] = convert(Array{Float64}, data_matrix)
-
+        data_dict["sha"] = sha
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
         data_dict["npoints"] = npoints
@@ -311,6 +363,8 @@ function create_tabulation_2D_no_units(
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 )
 
@@ -352,6 +406,10 @@ function create_tabulation_2D_no_units(
     if load_file()
         data = load(filepath)
         @info "$(filename) loaded!"
+        if check_SHA
+            func_sha = data["sha"]
+            test_sha(func, func_sha, mode = check_SHA_mode)
+        end
         x = data["x"]
         y = data["y"]
 
@@ -401,10 +459,11 @@ function create_tabulation_2D_no_units(
                 StepRangeLen,
             },
         }()
+        sha = compute_SHA(func)
         data_dict["x"] = x
         data_dict["y"] = y
         data_dict["func"] = convert(Array{Float64}, data_matrix)
-
+        data_dict["sha"] = sha
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
         data_dict["ymin"] = ymin
@@ -450,8 +509,10 @@ function create_tabulation_2D_no_units(
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
-) where {T<:Real, V<:Real}
+) where {T<:Real,V<:Real}
 
     func_name = nameof(func)
 
@@ -501,6 +562,10 @@ function create_tabulation_2D_no_units(
     if load_file()
         data = load(filepath)
         @info "$(filename) loaded!"
+        if check_SHA
+            func_sha = data["sha"]
+            test_sha(func, func_sha, mode = check_SHA_mode)
+        end
         x = data["x"]
         y = data["y"]
 
@@ -534,10 +599,11 @@ function create_tabulation_2D_no_units(
                 StepRangeLen,
             },
         }()
+        sha = compute_SHA(func)
         data_dict["x"] = x
         data_dict["y"] = y
         data_dict["func"] = convert(Array{Float64}, data_matrix)
-
+        data_dict["sha"] = sha
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
         data_dict["ymin"] = ymin
@@ -594,6 +660,8 @@ function create_tabulation_3D_no_units(
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 )
 
@@ -635,6 +703,10 @@ function create_tabulation_3D_no_units(
     if load_file()
         data = load(filepath)
         @info "$(filename) loaded!"
+        if check_SHA
+            func_sha = data["sha"]
+            test_sha(func, func_sha, mode = check_SHA_mode)
+        end
         x = data["x"]
         y = data["y"]
         z = data["z"]
@@ -695,11 +767,12 @@ function create_tabulation_3D_no_units(
                 StepRangeLen
             },
         }()
+        sha = compute_SHA(func)
         data_dict["x"] = x
         data_dict["y"] = y
         data_dict["z"] = z
         data_dict["func"] = convert(Array{Float64}, data_matrix)
-
+        data_dict["sha"] = sha
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
         data_dict["ymin"] = ymin
@@ -750,6 +823,8 @@ function create_tabulation_3D_no_units(
     f_scale = :linear,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Real,V<:Real,W<:Real}
 
@@ -806,6 +881,10 @@ function create_tabulation_3D_no_units(
     if load_file()
         data = load(filepath)
         @info "$(filename) loaded!"
+        if check_SHA
+            func_sha = data["sha"]
+            test_sha(func, func_sha, mode = check_SHA_mode)
+        end
         x = data["x"]
         y = data["y"]
         z = data["z"]
@@ -843,11 +922,12 @@ function create_tabulation_3D_no_units(
                 StepRangeLen
             },
         }()
+        sha = compute_SHA(func)
         data_dict["x"] = x
         data_dict["y"] = y
         data_dict["z"] = z
         data_dict["func"] = convert(Array{Float64}, data_matrix)
-
+        data_dict["sha"] = sha
         data_dict["xmin"] = xmin
         data_dict["xmax"] = xmax
         data_dict["ymin"] = ymin
@@ -1020,6 +1100,8 @@ function create_tabulation_1D(
     custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Union{Real,Quantity}}
 
@@ -1039,6 +1121,8 @@ function create_tabulation_1D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
     else
@@ -1065,6 +1149,8 @@ function create_tabulation_1D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
 
@@ -1083,6 +1169,8 @@ function create_tabulation_1D(
     custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Union{Real,Quantity}}
     xmin = minimum(x)
@@ -1101,6 +1189,8 @@ function create_tabulation_1D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
     else
@@ -1124,6 +1214,8 @@ function create_tabulation_1D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
 
@@ -1228,6 +1320,8 @@ function create_tabulation_2D(
     custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
 
@@ -1252,6 +1346,8 @@ function create_tabulation_2D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
     else
@@ -1284,6 +1380,8 @@ function create_tabulation_2D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
 
@@ -1304,6 +1402,8 @@ function create_tabulation_2D(
     custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
     xmin = minimum(x)
@@ -1325,6 +1425,8 @@ function create_tabulation_2D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
     else
@@ -1351,6 +1453,8 @@ function create_tabulation_2D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
 
@@ -1471,6 +1575,8 @@ function create_tabulation_3D(
     custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
@@ -1500,6 +1606,8 @@ function create_tabulation_3D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
     else
@@ -1538,6 +1646,8 @@ function create_tabulation_3D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
 
@@ -1560,9 +1670,11 @@ function create_tabulation_3D(
     custom_name = nothing,
     interpolation_type = :linear,
     extrapolation_bc = Throw,
+    check_SHA = true,
+    check_SHA_mode = :warn,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
-    xmin = minimum(x)    
+    xmin = minimum(x)
     ymin = minimum(y)
     zmin = minimum(z)
 
@@ -1586,6 +1698,8 @@ function create_tabulation_3D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
     else
@@ -1615,6 +1729,8 @@ function create_tabulation_3D(
             f_scale = f_scale,
             interpolation_type = interpolation_type,
             extrapolation_bc = extrapolation_bc,
+            check_SHA = check_SHA,
+            check_SHA_mode = check_SHA_mode,
             kwargs...
         )
 

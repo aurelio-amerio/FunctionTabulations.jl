@@ -928,3 +928,29 @@ end
 end
 
 
+@testset "warning" begin
+    func_1d(x) = sin(x)
+
+    # create interpolations and test them
+
+    itp_1d_1 = create_tabulation_1D(
+        func_1d,
+        xmin = 0.0,
+        xmax = 3.0,
+        npoints = 100,
+        x_scale = :linear,
+        f_scale = :linear
+    )
+
+    func_1d(x) = sin(x)^2 + 3
+
+    @test_warn "The SHA for $func_1d did not match the one of the stored tabulated function. Please check if the function definition has changed" create_tabulation_1D(
+        func_1d,
+        xmin = 0.0,
+        xmax = 3.0,
+        npoints = 100,
+        x_scale = :linear,
+        f_scale = :linear
+    )
+    rm("func_1d_data.jld2")
+end
