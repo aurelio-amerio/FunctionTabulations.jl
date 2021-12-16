@@ -944,7 +944,7 @@ end
 
     func_1d(x) = sin(x)^2 + 3
 
-    @test_warn "The SHA for $func_1d did not match the one of the stored tabulated function. Please check if the function definition has changed" create_tabulation_1D(
+    @test_logs (:warn,"The SHA for $(nameof(func_1d)) did not match the one of the stored tabulated function. Please check if the function definition has changed") create_tabulation_1D(
         func_1d,
         xmin = 0.0,
         xmax = 3.0,
