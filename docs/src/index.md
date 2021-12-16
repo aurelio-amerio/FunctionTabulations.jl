@@ -4,7 +4,7 @@ CurrentModule = FunctionTabulations
 
 # FunctionTabulations
 
-[Tabulation.jl](https://github.com/aurelio-amerio/FunctionTabulations.jl) is a wrapper around [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) to compute interpolation tables (FunctionTabulations) for functions of up to three variables with support for Unitful. 
+[FunctionTabulations.jl](https://github.com/aurelio-amerio/FunctionTabulations.jl) is a wrapper around [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) to compute interpolation tables (FunctionTabulations) for functions of up to three variables with support for Unitful. 
 
 This package stems from the common need in physics research projects to tabulate slow functions. With this package, it becomes possible to easily compute the values of a function and tabulate its values for up to three variables. 
 
