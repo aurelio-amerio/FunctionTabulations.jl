@@ -1075,7 +1075,7 @@ function create_tabulation_3D(
     extrapolation_bc = Throw,
     check_SHA::Bool = true,
     check_SHA_mode::Symbol = :warn,
-    compress::Book = false,
+    compress::Bool = false,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
@@ -1281,7 +1281,7 @@ function create_tabulation_3D(
     extrapolation_bc = Throw,
     check_SHA::Bool = true,
     check_SHA_mode::Symbol = :warn,
-    compress::Book = false,
+    compress::Bool = false,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
