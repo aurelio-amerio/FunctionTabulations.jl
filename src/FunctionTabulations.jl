@@ -1075,6 +1075,7 @@ function create_tabulation_3D(
     extrapolation_bc = Throw,
     check_SHA::Bool = true,
     check_SHA_mode::Symbol = :warn,
+    compress::Book = false,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
@@ -1214,7 +1215,7 @@ function create_tabulation_3D(
         data_dict["npoints_y"] = npoints_y
         data_dict["npoints_z"] = npoints_z
 
-        save(filepath, data_dict, compress = true)
+        save(filepath, data_dict, compress = compress)
         @info "$(filename) created and exported!"
     end
 
@@ -1280,6 +1281,7 @@ function create_tabulation_3D(
     extrapolation_bc = Throw,
     check_SHA::Bool = true,
     check_SHA_mode::Symbol = :warn,
+    compress::Book = false,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
@@ -1408,7 +1410,7 @@ function create_tabulation_3D(
         data_dict["npoints_y"] = npoints_y
         data_dict["npoints_z"] = npoints_z
 
-        save(filepath, data_dict, compress = true)
+        save(filepath, data_dict, compress = compress)
         @info "$(filename) created and exported!"
     end
 
