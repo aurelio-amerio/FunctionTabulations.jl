@@ -13,7 +13,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 CodecZlib = "0.7"
-Interpolations = "0.13"
+Interpolations = "0.13, 0.14"
 JLD2 = "0.4"
 ProgressMeter = "1"
 Unitful = "1"
