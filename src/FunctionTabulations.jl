@@ -10,153 +10,13 @@ using SHA: sha256
 
 export create_tabulation_1D, create_tabulation_2D, create_tabulation_3D
 
-
-"""
-    scaler(x::Real, scale::Symbol)
-
-Utility function to scale a variable, accepts :linear and :log10 scale
-"""
-function scaler(x::Real, scale::Symbol)
-    if scale == :linear
-        return x
-    elseif scale == :log10
-        return log10(x)
-    else
-        throw(ArgumentError("Scale <$scale> is not supported"))
-    end
-end
-
-"""
-    un_scaler(x::Real, scale::Symbol)
-
-Utility function to un_scale a variable, accepts :linear and :log10 scale
-"""
-function un_scaler(x::Real, scale::Symbol)
-    if scale == :linear
-        return x
-    elseif scale == :log10
-        return 10 .^ x
-    else
-        throw(ArgumentError("Scale <$scale> is not supported"))
-    end
-end
-
-"""
-    compute_SHA(func)
-
-Utility function to compute the SHA of a function.
-"""
-function compute_SHA(func::Function)
-    c1 = code_lowered(func)
-    h1 = bytes2hex(sha256(string(c1)))
-    return h1
-end
-
-"""
-    test_sha(func, sha[; mode = :warn])
-
-Compares the SHA of the `func` funtion with the provided SHA.
-"""
-function test_sha(func::Function, sha::String; mode::Symbol = :warn)
-    func_sha = compute_SHA(func)
-    func_name = nameof(func)
-    if sha != func_sha
-        if mode == :warn
-            @warn "The SHA for `$func_name` did not match the one of the stored tabulated function. Please check if the function definition has changed."
-        elseif mode == :throw
-            @error "The SHA for `$func_name` did not match the one of the stored tabulated function. Please check if the function definition has changed."
-        elseif mode == :none
-        else
-            @error "Mode not supported. Got $(mode)."
-        end
-    end
-end
-
-"""
-    wrap_function_1D_add_units(func, x_units, f_units[, args...; kwargs...])
-
-Add units back to a 1D function.
-"""
-function wrap_function_1D_add_units(func::Function, x_units, f_units, args...; kwargs...)
-    function wrapped_func(x)
-        x_v = ustrip(x_units, x)
-        return func(x_v, args...; kwargs...) * f_units
-    end
-    return wrapped_func
-end
-
-"""
-    wrap_function_2D_add_units(func, x_units, y_units, f_units[, args...; kwargs...])
-
-Add units back to a 2D function.
-"""
-function wrap_function_2D_add_units(func::Function, x_units, y_units, f_units, args...; kwargs...)
-    function wrapped_func(x, y)
-        x_v = ustrip(x_units, x)
-        y_v = ustrip(y_units, y)
-        return func(x_v, y_v, args...; kwargs...) * f_units
-    end
-    return wrapped_func
-end
-
-"""
-    wrap_function_3D_add_units(func, x_units, y_units, z_units, f_units[, args...; kwargs...])
-
-Add units back to a 3D function.
-"""
-function wrap_function_3D_add_units(func::Function, x_units, y_units, z_units, f_units, args...; kwargs...)
-    function wrapped_func(x, y, z)
-        x_v = ustrip(x_units, x)
-        y_v = ustrip(y_units, y)
-        z_v = ustrip(z_units, z)
-        return func(x_v, y_v, z_v, args...; kwargs...) * f_units
-    end
-    return wrapped_func
-end
-
-"""
-    wrap_function_1D_remove_units(func, x_units, f_units[, args...; kwargs...])
-
-Remove units from a 1D function.
-"""
-function wrap_function_1D_remove_units(func::Function, x_units, f_units, args...; kwargs...)
-    function wrapped_function(x::Real)
-        x_v = x * x_units
-        return ustrip(f_units, func(x_v, args...; kwargs...))
-    end
-    return wrapped_function
-end
-
-"""
-    wrap_function_2D_remove_units(func, x_units, y_units, f_units[, args...; kwargs...])
-
-Remove units from a 2D function.
-"""
-function wrap_function_2D_remove_units(func::Function, x_units, y_units, f_units, args...; kwargs...)
-    function wrapped_function(x::Real, y::Real)
-        x_v = x * x_units
-        y_v = y * y_units
-        return ustrip(f_units, func(x_v, y_v, args...; kwargs...))
-    end
-    return wrapped_function
-end
-
-"""
-    wrap_function_3D_remove_units(func, x_units, y_units, z_units, f_units[, args...; kwargs...])
-
-Remove units from a 3D function.
-"""
-function wrap_function_3D_remove_units(func::Function, x_units, y_units, z_units, f_units, args...; kwargs...)
-    function wrapped_function(x::Real, y::Real, z::Real)
-        x_v = x * x_units
-        y_v = y * y_units
-        z_v = z * z_units
-        return ustrip(f_units, func(x_v, y_v, z_v, args...; kwargs...))
-    end
-    return wrapped_function
-end
-
 # made with <3
+
+include("helpers.jl")
+include("helpers_1D.jl")
+include("helpers_2D.jl")
+include("helpers_3D.jl")
+
 
 """
     create_tabulation_1D(
@@ -233,17 +93,19 @@ true
 function create_tabulation_1D(
     func::Function,
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
+    jld_base_path::Union{String,Nothing}=nothing,
+    custom_name::Union{String,Nothing}=nothing,
     xmin::T,
     xmax::T,
     npoints::Int,
-    x_scale::Symbol = :linear,
-    f_scale = :linear,
-    interpolation_type = :linear,
-    extrapolation_bc = Throw,
-    check_SHA::Bool = true,
-    check_SHA_mode::Symbol = :warn,
+    x_scale::Symbol=:linear,
+    f_scale::Symbol=:linear,
+    interpolation_type::Symbol=:linear,
+    extrapolation_bc=Throw,
+    check_SHA::Bool=true,
+    check_SHA_mode::Symbol=:warn,
+    metadata::Union{Dict{String,Any},Nothing}=nothing,
+    metadata_validation_fn::Union{Function,Nothing}=nothing,
     kwargs...
 ) where {T<:Union{Real,Quantity}}
 
@@ -258,45 +120,15 @@ function create_tabulation_1D(
 
     arg = wrap_function_1D_remove_units(arg_tmp, x_units, f_units)
 
-    if isnothing(jld_base_path)
-        base_path = pwd()
-    else
-        base_path = jld_base_path
-    end
+    filename, filepath = _init(func_name, jld_base_path, custom_name)
 
-    if !(ispath(base_path))
-        mkdir(base_path)
-    end
-
-    if isnothing(custom_name)
-        filename = "$(func_name)_data.jld2"
-    else
-        filename = "$(custom_name)_data.jld2"
-    end
-
-    filepath = "$(base_path)/$(filename)"
-
-    function load_file()
-        if isfile(filepath)
-            data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["npoints"] == npoints
-                return true
-            else
-                @warn "The provided tabulation range or npoints does not match the data stored in the tabulation file. The tabulation will be recomputed."
-                return false
-            end
-        else
-            return false
-        end
-    end
-
-    if load_file()
+    if _load_file_1D(filepath, xmin, xmax, npoints, metadata, metadata_validation_fn)
         data = load(filepath)
 
         @info "$(filename) loaded!"
         if check_SHA
             func_sha = data["sha"]
-            test_sha(func, func_sha, mode = check_SHA_mode)
+            test_sha(func, func_sha, mode=check_SHA_mode)
         end
         x = data["x"]
 
@@ -304,9 +136,9 @@ function create_tabulation_1D(
 
     else
         if x_scale == :linear
-            x = range(xmin_v, xmax_v, length = npoints)
+            x = range(xmin_v, xmax_v, length=npoints)
         elseif x_scale == :log10
-            x = range(log10(xmin_v), log10(xmax_v), length = npoints)
+            x = range(log10(xmin_v), log10(xmax_v), length=npoints)
         else
             throw(ArgumentError("X scale $x_scale not supported"))
         end
@@ -317,61 +149,10 @@ function create_tabulation_1D(
             @info "Computing $(custom_name) Interpolation"
         end
 
-        p = Progress(Int(npoints))
-        update!(p, 0)
-
-        data_matrix = zeros(npoints)
-
-        @threads for i = 1:npoints
-
-            data_matrix[i] = arg(un_scaler(x[i], x_scale))
-
-            next!(p)
-        end
-
-        data_dict = Dict{
-            String,
-            Union{
-                String,
-                Real,
-                Quantity,
-                Array,
-                StepRangeLen
-            },
-        }()
-        sha = compute_SHA(func)
-        data_dict["x"] = x
-        data_dict["func"] = convert(Array, data_matrix)
-        data_dict["sha"] = sha
-        data_dict["xmin"] = xmin
-        data_dict["xmax"] = xmax
-        data_dict["npoints"] = npoints
-
-        save(filepath, data_dict)
-        @info "$(filename) created and exported!"
+        data_matrix = _compute_matrix_and_save_1D(func, arg, x, x_scale, xmin, xmax, npoints, metadata, filepath, filename)
     end
 
-    if f_scale == :log10
-        data_matrix[data_matrix.<=1e-300] .= 1e-300
-    end
-
-    knots = (x,)
-    f_matrix = scaler.(data_matrix, f_scale)
-
-    if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    elseif interpolation_type == :cubic
-        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    else
-        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
-    end
-
-
-    function func_interp(x::Real)
-        return un_scaler(itp(scaler(x, x_scale)), f_scale)::Float64
-    end
-
-    func_interp_units = wrap_function_1D_add_units(func_interp, x_units, f_units)
+    func_interp_units = _get_interp_fn_1D(x, data_matrix, x_scale, f_scale, x_units, f_units, interpolation_type, extrapolation_bc)
 
     return func_interp_units::Function
 end
@@ -398,14 +179,16 @@ function create_tabulation_1D(
     func::Function,
     x::Vector{T},
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
-    x_scale::Symbol = :linear,
-    f_scale = :linear,
-    interpolation_type = :linear,
-    extrapolation_bc = Throw,
-    check_SHA::Bool = true,
-    check_SHA_mode::Symbol = :warn,
+    jld_base_path::Union{String,Nothing}=nothing,
+    custom_name::Union{String,Nothing}=nothing,
+    x_scale::Symbol=:linear,
+    f_scale::Symbol=:linear,
+    interpolation_type::Symbol=:linear,
+    extrapolation_bc=Throw,
+    check_SHA::Bool=true,
+    check_SHA_mode::Symbol=:warn,
+    metadata::Union{Dict{String,Any},Nothing}=nothing,
+    metadata_validation_fn::Union{Function,Nothing}=nothing,
     kwargs...
 ) where {T<:Union{Real,Quantity}}
 
@@ -425,44 +208,14 @@ function create_tabulation_1D(
 
     arg = wrap_function_1D_remove_units(arg_tmp, x_units, f_units)
 
-    if isnothing(jld_base_path)
-        base_path = pwd()
-    else
-        base_path = jld_base_path
-    end
+    filename, filepath = _init(func_name, jld_base_path, custom_name)
 
-    if !(ispath(base_path))
-        mkdir(base_path)
-    end
-
-    if isnothing(custom_name)
-        filename = "$(func_name)_data.jld2"
-    else
-        filename = "$(custom_name)_data.jld2"
-    end
-
-    filepath = "$(base_path)/$(filename)"
-
-    function load_file()
-        if isfile(filepath)
-            data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["npoints"] == npoints
-                return true
-            else
-                @warn "The provided tabulation range or npoints does not match the data stored in the tabulation file. The tabulation will be recomputed."
-                return false
-            end
-        else
-            return false
-        end
-    end
-
-    if load_file()
+    if _load_file_1D(filepath, xmin, xmax, npoints, metadata, metadata_validation_fn)
         data = load(filepath)
         @info "$(filename) loaded!"
         if check_SHA
             func_sha = data["sha"]
-            test_sha(func, func_sha, mode = check_SHA_mode)
+            test_sha(func, func_sha, mode=check_SHA_mode)
         end
         x_v = data["x"]
 
@@ -475,61 +228,11 @@ function create_tabulation_1D(
             @info "Computing $(custom_name) Interpolation"
         end
 
-        p = Progress(Int(npoints))
-        update!(p, 0)
-
-        data_matrix = zeros(npoints)
-
-        @threads for i = 1:npoints
-
-            data_matrix[i] = arg(un_scaler(x_v[i], x_scale))
-
-            next!(p)
-        end
-
-        data_dict = Dict{
-            String,
-            Union{
-                String,
-                Real,
-                Quantity,
-                Array,
-                StepRangeLen
-            },
-        }()
-        sha = compute_SHA(func)
-        data_dict["x"] = x_v
-        data_dict["func"] = convert(Array{Float64}, data_matrix)
-        data_dict["sha"] = sha
-        data_dict["xmin"] = xmin
-        data_dict["xmax"] = xmax
-        data_dict["npoints"] = npoints
-
-        save(filepath, data_dict)
-        @info "$(filename) created and exported!"
-    end
-
-    if f_scale == :log10
-        data_matrix[data_matrix.<=1e-300] .= 1e-300
-    end
-
-    knots = (x_v,)
-    f_matrix = scaler.(data_matrix, f_scale)
-
-    if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    elseif interpolation_type == :cubic
-        throw(ArgumentError("$interpolation_type is not supported for this tabulation method"))
-    else
-        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
+        data_matrix = _compute_matrix_and_save_1D(func, arg, x_v, x_scale, xmin, xmax, npoints, metadata, filepath, filename)
     end
 
 
-    function func_interp(x::Real)
-        return un_scaler(itp(scaler(x, x_scale)), f_scale)::Float64
-    end
-
-    func_interp_units = wrap_function_1D_add_units(func_interp, x_units, f_units)
+    func_interp_units = _get_interp_fn_1D(x_v, data_matrix, x_scale, f_scale, x_units, f_units, interpolation_type, extrapolation_bc)
 
     return func_interp_units::Function
 end
@@ -620,21 +323,23 @@ true
 function create_tabulation_2D(
     func::Function,
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
+    jld_base_path::Union{String,Nothing}=nothing,
+    custom_name::Union{String,Nothing}=nothing,
     xmin::T,
     xmax::T,
     ymin::V,
     ymax::V,
     npoints_x::Int,
     npoints_y::Int,
-    x_scale::Symbol = :linear,
-    y_scale::Symbol = :linear,
-    f_scale = :linear,
-    interpolation_type = :linear,
-    extrapolation_bc = Throw,
-    check_SHA::Bool = true,
-    check_SHA_mode::Symbol = :warn,
+    x_scale::Symbol=:linear,
+    y_scale::Symbol=:linear,
+    f_scale::Symbol=:linear,
+    interpolation_type::Symbol=:linear,
+    extrapolation_bc=Throw,
+    check_SHA::Bool=true,
+    check_SHA_mode::Symbol=:warn,
+    metadata::Union{Dict{String,Any},Nothing}=nothing,
+    metadata_validation_fn::Union{Function,Nothing}=nothing,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
 
@@ -652,45 +357,14 @@ function create_tabulation_2D(
 
     arg = wrap_function_2D_remove_units(arg_tmp, x_units, y_units, f_units)
 
-    if isnothing(jld_base_path)
-        base_path = pwd()
-    else
-        base_path = jld_base_path
-    end
+    filename, filepath = _init(func_name, jld_base_path, custom_name)
 
-    if !(ispath(base_path))
-        mkdir(base_path)
-    end
-
-    if isnothing(custom_name)
-        filename = "$(func_name)_data.jld2"
-    else
-        filename = "$(custom_name)_data.jld2"
-    end
-
-    filepath = "$(base_path)/$(filename)"
-
-    function load_file()
-        if isfile(filepath)
-            data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["npoints_x"] == npoints_x && data["npoints_y"] == npoints_y
-                return true
-            else
-                @warn "The provided tabulation range or npoints does not match the data stored in the tabulation file. The tabulation will be recomputed."
-
-                return false
-            end
-        else
-            return false
-        end
-    end
-
-    if load_file()
+    if _load_file_2D(filepath, xmin, xmax, ymin, ymax, npoints_x, npoints_y, metadata, metadata_validation_fn)
         data = load(filepath)
         @info "$(filename) loaded!"
         if check_SHA
             func_sha = data["sha"]
-            test_sha(func, func_sha, mode = check_SHA_mode)
+            test_sha(func, func_sha, mode=check_SHA_mode)
         end
         x = data["x"]
         y = data["y"]
@@ -699,17 +373,17 @@ function create_tabulation_2D(
 
     else
         if x_scale == :linear
-            x = range(xmin_v, xmax_v, length = npoints_x)
+            x = range(xmin_v, xmax_v, length=npoints_x)
         elseif x_scale == :log10
-            x = range(log10(xmin_v), log10(xmax_v), length = npoints_x)
+            x = range(log10(xmin_v), log10(xmax_v), length=npoints_x)
         else
             throw(ArgumentError("X scale $x_scale not supported"))
         end
 
         if y_scale == :linear
-            y = range(ymin_v, ymax_v, length = npoints_y)
+            y = range(ymin_v, ymax_v, length=npoints_y)
         elseif y_scale == :log10
-            y = range(log10(ymin_v), log10(ymax_v), length = npoints_y)
+            y = range(log10(ymin_v), log10(ymax_v), length=npoints_y)
         else
             throw(ArgumentError("Y scale $y_scale not supported"))
         end
@@ -720,64 +394,10 @@ function create_tabulation_2D(
             @info "Computing $(custom_name) Interpolation"
         end
 
-        p = Progress(Int(npoints_y))
-        update!(p, 0)
-
-        data_matrix = zeros(npoints_x, npoints_y)
-
-        @threads for j = 1:npoints_y
-            for i = 1:npoints_x
-                data_matrix[i, j] = arg(un_scaler(x[i], x_scale), un_scaler(y[j], y_scale))
-            end
-            next!(p)
-        end
-
-        data_dict = Dict{
-            String,
-            Union{
-                String,
-                Real,
-                Quantity,
-                Array,
-                StepRangeLen
-            },
-        }()
-        sha = compute_SHA(func)
-        data_dict["x"] = x
-        data_dict["y"] = y
-        data_dict["func"] = convert(Array{Float64}, data_matrix)
-        data_dict["sha"] = sha
-        data_dict["xmin"] = xmin
-        data_dict["xmax"] = xmax
-        data_dict["ymin"] = ymin
-        data_dict["ymax"] = ymax
-        data_dict["npoints_x"] = npoints_x
-        data_dict["npoints_y"] = npoints_y
-
-        save(filepath, data_dict)
-        @info "$(filename) created and exported!"
+        data_matrix = _compute_matrix_and_save_2D(func, arg, x, y, x_scale, y_scale, xmin, xmax, ymin, ymax, npoints_x, npoints_y, metadata, filepath, filename)
     end
 
-    if f_scale == :log10
-        data_matrix[data_matrix.<=1e-300] .= 1e-300
-    end
-
-    knots = (x, y)
-    f_matrix = scaler.(data_matrix, f_scale)
-
-    if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    elseif interpolation_type == :cubic
-        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    else
-        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
-    end
-
-    function func_interp(x::Real, y::Real)
-        return un_scaler(itp(scaler(x, x_scale), scaler(y, y_scale)), f_scale)::Float64
-    end
-
-    func_interp_units = wrap_function_2D_add_units(func_interp, x_units, y_units, f_units)
+    func_interp_units = _get_interp_fn_2D(x, y, data_matrix, x_scale, y_scale, f_scale, x_units, y_units, f_units, interpolation_type, extrapolation_bc)
 
     return func_interp_units::Function
 end
@@ -807,15 +427,17 @@ function create_tabulation_2D(
     x::Vector{T},
     y::Vector{V},
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
-    x_scale::Symbol = :linear,
-    y_scale::Symbol = :linear,
-    f_scale = :linear,
-    interpolation_type = :linear,
-    extrapolation_bc = Throw,
-    check_SHA::Bool = true,
-    check_SHA_mode::Symbol = :warn,
+    jld_base_path::Union{String,Nothing}=nothing,
+    custom_name::Union{String,Nothing}=nothing,
+    x_scale::Symbol=:linear,
+    y_scale::Symbol=:linear,
+    f_scale::Symbol=:linear,
+    interpolation_type::Symbol=:linear,
+    extrapolation_bc=Throw,
+    check_SHA::Bool=true,
+    check_SHA_mode::Symbol=:warn,
+    metadata::Union{Dict{String,Any},Nothing}=nothing,
+    metadata_validation_fn::Union{Function,Nothing}=nothing,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
 
@@ -842,45 +464,14 @@ function create_tabulation_2D(
 
     arg = wrap_function_2D_remove_units(arg_tmp, x_units, y_units, f_units)
 
-    if isnothing(jld_base_path)
-        base_path = pwd()
-    else
-        base_path = jld_base_path
-    end
+    filename, filepath = _init(func_name, jld_base_path, custom_name)
 
-    if !(ispath(base_path))
-        mkdir(base_path)
-    end
-
-    if isnothing(custom_name)
-        filename = "$(func_name)_data.jld2"
-    else
-        filename = "$(custom_name)_data.jld2"
-    end
-
-    filepath = "$(base_path)/$(filename)"
-
-    function load_file()
-        if isfile(filepath)
-            data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["npoints_x"] == npoints_x && data["npoints_y"] == npoints_y
-                return true
-            else
-                @warn "The provided tabulation range or npoints does not match the data stored in the tabulation file. The tabulation will be recomputed."
-
-                return false
-            end
-        else
-            return false
-        end
-    end
-
-    if load_file()
+    if _load_file_2D(filepath, xmin, xmax, ymin, ymax, npoints_x, npoints_y, metadata, metadata_validation_fn)
         data = load(filepath)
         @info "$(filename) loaded!"
         if check_SHA
             func_sha = data["sha"]
-            test_sha(func, func_sha, mode = check_SHA_mode)
+            test_sha(func, func_sha, mode=check_SHA_mode)
         end
         x_v = data["x"]
         y_v = data["y"]
@@ -894,64 +485,10 @@ function create_tabulation_2D(
             @info "Computing $(custom_name) Interpolation"
         end
 
-        p = Progress(Int(npoints_y))
-        update!(p, 0)
-
-        data_matrix = zeros(npoints_x, npoints_y)
-
-        @threads for j = 1:npoints_y
-            for i = 1:npoints_x
-                data_matrix[i, j] = arg(un_scaler(x_v[i], x_scale), un_scaler(y_v[j], y_scale))
-            end
-            next!(p)
-        end
-
-        data_dict = Dict{
-            String,
-            Union{
-                String,
-                Real,
-                Quantity,
-                Array,
-                StepRangeLen
-            },
-        }()
-        sha = compute_SHA(func)
-        data_dict["x"] = x_v
-        data_dict["y"] = y_v
-        data_dict["func"] = convert(Array{Float64}, data_matrix)
-        data_dict["sha"] = sha
-        data_dict["xmin"] = xmin
-        data_dict["xmax"] = xmax
-        data_dict["ymin"] = ymin
-        data_dict["ymax"] = ymax
-        data_dict["npoints_x"] = npoints_x
-        data_dict["npoints_y"] = npoints_y
-
-        save(filepath, data_dict)
-        @info "$(filename) created and exported!"
+        data_matrix = _compute_matrix_and_save_2D(func, arg, x_v, y_v, x_scale, y_scale, xmin, xmax, ymin, ymax, npoints_x, npoints_y, metadata, filepath, filename)
     end
 
-    if f_scale == :log10
-        data_matrix[data_matrix.<=1e-300] .= 1e-300
-    end
-
-    knots = (x_v, y_v)
-    f_matrix = scaler.(data_matrix, f_scale)
-
-    if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    elseif interpolation_type == :cubic
-        throw(ArgumentError("$interpolation_type is not supported for this tabulation method"))
-    else
-        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
-    end
-
-    function func_interp(x::Real, y::Real)
-        return un_scaler(itp(scaler(x, x_scale), scaler(y, y_scale)), f_scale)::Float64
-    end
-
-    func_interp_units = wrap_function_2D_add_units(func_interp, x_units, y_units, f_units)
+    func_interp_units = _get_interp_fn_2D(x_v, y_v, data_matrix, x_scale, y_scale, f_scale, x_units, y_units, f_units, interpolation_type, extrapolation_bc)
 
     return func_interp_units::Function
 end
@@ -1056,8 +593,8 @@ true
 function create_tabulation_3D(
     func::Function,
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
+    jld_base_path::Union{String,Nothing}=nothing,
+    custom_name::Union{String,Nothing}=nothing,
     xmin::T,
     xmax::T,
     ymin::V,
@@ -1067,15 +604,17 @@ function create_tabulation_3D(
     npoints_x::Int,
     npoints_y::Int,
     npoints_z::Int,
-    x_scale::Symbol = :linear,
-    y_scale::Symbol = :linear,
-    z_scale::Symbol = :linear,
-    f_scale = :linear,
-    interpolation_type = :linear,
-    extrapolation_bc = Throw,
-    check_SHA::Bool = true,
-    check_SHA_mode::Symbol = :warn,
-    compress::Bool = false,
+    x_scale::Symbol=:linear,
+    y_scale::Symbol=:linear,
+    z_scale::Symbol=:linear,
+    f_scale::Symbol=:linear,
+    interpolation_type::Symbol=:linear,
+    extrapolation_bc=Throw,
+    check_SHA::Bool=true,
+    check_SHA_mode::Symbol=:warn,
+    compress::Bool=false,
+    metadata::Union{Dict{String,Any},Nothing}=nothing,
+    metadata_validation_fn::Union{Function,Nothing}=nothing,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
@@ -1097,46 +636,15 @@ function create_tabulation_3D(
 
     arg = wrap_function_3D_remove_units(arg_tmp, x_units, y_units, z_units, f_units)
 
+    filename, filepath = _init(func_name, jld_base_path, custom_name)
 
-    if isnothing(jld_base_path)
-        base_path = pwd()
-    else
-        base_path = jld_base_path
-    end
 
-    if !(ispath(base_path))
-        mkdir(base_path)
-    end
-
-    if isnothing(custom_name)
-        filename = "$(func_name)_data.jld2"
-    else
-        filename = "$(custom_name)_data.jld2"
-    end
-
-    filepath = "$(base_path)/$(filename)"
-
-    function load_file()
-        if isfile(filepath)
-            data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["zmin"] == zmin && data["zmax"] == zmax && data["npoints_x"] == npoints_x && data["npoints_y"] == npoints_y && data["npoints_z"] == npoints_z
-                return true
-            else
-                @warn "The provided tabulation range or npoints does not match the data stored in the tabulation file. The tabulation will be recomputed."
-
-                return false
-            end
-        else
-            return false
-        end
-    end
-
-    if load_file()
+    if _load_file_3D(filepath, xmin, xmax, ymin, ymax, zmin, zmax, npoints_x, npoints_y, npoints_z, metadata, metadata_validation_fn)
         data = load(filepath)
         @info "$(filename) loaded!"
         if check_SHA
             func_sha = data["sha"]
-            test_sha(func, func_sha, mode = check_SHA_mode)
+            test_sha(func, func_sha, mode=check_SHA_mode)
         end
         x = data["x"]
         y = data["y"]
@@ -1146,25 +654,25 @@ function create_tabulation_3D(
 
     else
         if x_scale == :linear
-            x = range(xmin_v, xmax_v, length = npoints_x)
+            x = range(xmin_v, xmax_v, length=npoints_x)
         elseif x_scale == :log10
-            x = range(log10(xmin_v), log10(xmax_v), length = npoints_x)
+            x = range(log10(xmin_v), log10(xmax_v), length=npoints_x)
         else
             throw(ArgumentError("X scale $x_scale not supported"))
         end
 
         if y_scale == :linear
-            y = range(ymin_v, ymax_v, length = npoints_y)
+            y = range(ymin_v, ymax_v, length=npoints_y)
         elseif y_scale == :log10
-            y = range(log10(ymin_v), log10(ymax_v), length = npoints_y)
+            y = range(log10(ymin_v), log10(ymax_v), length=npoints_y)
         else
             throw(ArgumentError("Y scale $y_scale not supported"))
         end
 
         if z_scale == :linear
-            z = range(zmin_v, zmax_v, length = npoints_z)
+            z = range(zmin_v, zmax_v, length=npoints_z)
         elseif z_scale == :log10
-            z = range(log10(zmin_v), log10(zmax_v), length = npoints_z)
+            z = range(log10(zmin_v), log10(zmax_v), length=npoints_z)
         else
             throw(ArgumentError("Z scale $z_scale not supported"))
         end
@@ -1175,70 +683,10 @@ function create_tabulation_3D(
             @info "Computing $(custom_name) Interpolation"
         end
 
-        p = Progress(Int(npoints_z * npoints_y))
-        update!(p, 0)
-
-        data_matrix = zeros(npoints_x, npoints_y, npoints_z)
-
-        @threads for k = 1:npoints_z
-            for j = 1:npoints_y
-                for i = 1:npoints_x
-                    data_matrix[i, j, k] = arg(un_scaler(x[i], x_scale), un_scaler(y[j], y_scale), un_scaler(z[k], z_scale))
-                end
-                next!(p)
-            end
-        end
-
-        data_dict = Dict{
-            String,
-            Union{
-                String,
-                Real,
-                Quantity,
-                Array,
-                StepRangeLen
-            },
-        }()
-        sha = compute_SHA(func)
-        data_dict["x"] = x
-        data_dict["y"] = y
-        data_dict["z"] = z
-        data_dict["func"] = convert(Array{Float64}, data_matrix)
-        data_dict["sha"] = sha
-        data_dict["xmin"] = xmin
-        data_dict["xmax"] = xmax
-        data_dict["ymin"] = ymin
-        data_dict["ymax"] = ymax
-        data_dict["zmin"] = zmin
-        data_dict["zmax"] = zmax
-        data_dict["npoints_x"] = npoints_x
-        data_dict["npoints_y"] = npoints_y
-        data_dict["npoints_z"] = npoints_z
-
-        save(filepath, data_dict, compress = compress)
-        @info "$(filename) created and exported!"
+        data_matrix = _compute_matrix_and_save_3D(func, arg, x, y, z, x_scale, y_scale, z_scale, xmin, xmax, ymin, ymax, zmin, zmax, npoints_x, npoints_y, npoints_z, metadata, filepath, filename, compress)
     end
 
-    if f_scale == :log10
-        data_matrix[data_matrix.<=1e-300] .= 1e-300
-    end
-
-    knots = (x, y, z)
-    f_matrix = scaler.(data_matrix, f_scale)
-
-    if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    elseif interpolation_type == :cubic
-        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    else
-        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
-    end
-
-    function func_interp(x::Real, y::Real, z::Real)
-        return un_scaler(itp(scaler(x, x_scale), scaler(y, y_scale), scaler.(z, z_scale)), f_scale)::Float64
-    end
-
-    func_interp_units = wrap_function_3D_add_units(func_interp, x_units, y_units, z_units, f_units)
+    func_interp_units = _get_interp_fn_3D(x, y, z, data_matrix, x_scale, y_scale, z_scale, f_scale, x_units, y_units, z_units, f_units, interpolation_type, extrapolation_bc)
 
     return func_interp_units::Function
 end
@@ -1271,17 +719,19 @@ function create_tabulation_3D(
     y::Vector{V},
     z::Vector{W},
     args...;
-    jld_base_path = nothing,
-    custom_name = nothing,
-    x_scale::Symbol = :linear,
-    y_scale::Symbol = :linear,
-    z_scale::Symbol = :linear,
-    f_scale = :linear,
-    interpolation_type = :linear,
-    extrapolation_bc = Throw,
-    check_SHA::Bool = true,
-    check_SHA_mode::Symbol = :warn,
-    compress::Bool = false,
+    jld_base_path=nothing,
+    custom_name=nothing,
+    x_scale::Symbol=:linear,
+    y_scale::Symbol=:linear,
+    z_scale::Symbol=:linear,
+    f_scale=:linear,
+    interpolation_type=:linear,
+    extrapolation_bc=Throw,
+    check_SHA::Bool=true,
+    check_SHA_mode::Symbol=:warn,
+    compress::Bool=false,
+    metadata::Union{Dict{String,Any},Nothing}=nothing,
+    metadata_validation_fn::Union{Function,Nothing}=nothing,
     kwargs...
 ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
@@ -1316,45 +766,14 @@ function create_tabulation_3D(
     arg = wrap_function_3D_remove_units(arg_tmp, x_units, y_units, z_units, f_units)
 
 
-    if isnothing(jld_base_path)
-        base_path = pwd()
-    else
-        base_path = jld_base_path
-    end
+    filename, filepath = _init(func_name, jld_base_path, custom_name)
 
-    if !(ispath(base_path))
-        mkdir(base_path)
-    end
-
-    if isnothing(custom_name)
-        filename = "$(func_name)_data.jld2"
-    else
-        filename = "$(custom_name)_data.jld2"
-    end
-
-    filepath = "$(base_path)/$(filename)"
-
-    function load_file()
-        if isfile(filepath)
-            data = load(filepath)
-            if data["xmin"] == xmin && data["xmax"] == xmax && data["ymin"] == ymin && data["ymax"] == ymax && data["zmin"] == zmin && data["zmax"] == zmax && data["npoints_x"] == npoints_x && data["npoints_y"] == npoints_y && data["npoints_z"] == npoints_z
-                return true
-            else
-                @warn "The provided tabulation range or npoints does not match the data stored in the tabulation file. The tabulation will be recomputed."
-
-                return false
-            end
-        else
-            return false
-        end
-    end
-
-    if load_file()
+    if _load_file_3D(filepath, xmin, xmax, ymin, ymax, zmin, zmax, npoints_x, npoints_y, npoints_z, metadata, metadata_validation_fn)
         data = load(filepath)
         @info "$(filename) loaded!"
         if check_SHA
             func_sha = data["sha"]
-            test_sha(func, func_sha, mode = check_SHA_mode)
+            test_sha(func, func_sha, mode=check_SHA_mode)
         end
         x_v = data["x"]
         y_v = data["y"]
@@ -1370,70 +789,10 @@ function create_tabulation_3D(
             @info "Computing $(custom_name) Interpolation"
         end
 
-        p = Progress(Int(npoints_z * npoints_y))
-        update!(p, 0)
-
-        data_matrix = zeros(npoints_x, npoints_y, npoints_z)
-
-        @threads for k = 1:npoints_z
-            for j = 1:npoints_y
-                for i = 1:npoints_x
-                    data_matrix[i, j, k] = arg(un_scaler(x_v[i], x_scale), un_scaler(y_v[j], y_scale), un_scaler(z_v[k], z_scale))
-                end
-                next!(p)
-            end
-        end
-
-        data_dict = Dict{
-            String,
-            Union{
-                String,
-                Real,
-                Quantity,
-                Array,
-                StepRangeLen
-            },
-        }()
-        sha = compute_SHA(func)
-        data_dict["x"] = x_v
-        data_dict["y"] = y_v
-        data_dict["z"] = z_v
-        data_dict["func"] = convert(Array{Float64}, data_matrix)
-        data_dict["sha"] = sha
-        data_dict["xmin"] = xmin
-        data_dict["xmax"] = xmax
-        data_dict["ymin"] = ymin
-        data_dict["ymax"] = ymax
-        data_dict["zmin"] = zmin
-        data_dict["zmax"] = zmax
-        data_dict["npoints_x"] = npoints_x
-        data_dict["npoints_y"] = npoints_y
-        data_dict["npoints_z"] = npoints_z
-
-        save(filepath, data_dict, compress = compress)
-        @info "$(filename) created and exported!"
+        data_matrix = _compute_matrix_and_save_3D(func, arg, x_v, y_v, z_v, x_scale, y_scale, z_scale, xmin, xmax, ymin, ymax, zmin, zmax, npoints_x, npoints_y, npoints_z, metadata, filepath, filename, compress)
     end
 
-    if f_scale == :log10
-        data_matrix[data_matrix.<=1e-300] .= 1e-300
-    end
-
-    knots = (x_v, y_v, z_v)
-    f_matrix = scaler.(data_matrix, f_scale)
-
-    if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
-    elseif interpolation_type == :cubic
-        throw(ArgumentError("$interpolation_type is not supported for this tabulation method"))
-    else
-        throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
-    end
-
-    function func_interp(x::Real, y::Real, z::Real)
-        return un_scaler(itp(scaler(x, x_scale), scaler(y, y_scale), scaler.(z, z_scale)), f_scale)::Float64
-    end
-
-    func_interp_units = wrap_function_3D_add_units(func_interp, x_units, y_units, z_units, f_units)
+    func_interp_units = _get_interp_fn_3D(x_v, y_v, z_v, data_matrix, x_scale, y_scale, z_scale, f_scale, x_units, y_units, z_units, f_units, interpolation_type, extrapolation_bc)
 
     return func_interp_units::Function
 end

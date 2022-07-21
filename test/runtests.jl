@@ -2,6 +2,11 @@ using FunctionTabulations
 using Unitful
 using Test
 
+
+function metadata_validation_fn(metadata, loaded_metadata)
+    return metadata["a"] == loaded_metadata["a"]
+end
+
 @testset "warning" begin
     func_1d(x) = sin(x)
 
@@ -113,13 +118,17 @@ end
 
     # create interpolations and test them
 
+    
+
     itp_1d_1 = create_tabulation_1D(
         func_1d,
         xmin = 0.0,
         xmax = 3.0,
         npoints = 100,
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1),
+        metadata_validation_fn = metadata_validation_fn
     )
 
     itp_1d_2 = create_tabulation_1D(
@@ -140,7 +149,8 @@ end
         custom_name = "1d_3",
         collect(range(0,3,length=100)),
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_1d_4 = create_tabulation_1D(
@@ -168,7 +178,9 @@ end
         xmax = 3.0,
         npoints = 100,
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1),
+        metadata_validation_fn = metadata_validation_fn
     )
 
     itp_1d_2 = create_tabulation_1D(
@@ -189,7 +201,8 @@ end
         custom_name = "1d_3",
         collect(range(0,3,length=100)),
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_1d_4 = create_tabulation_1D(
@@ -227,7 +240,8 @@ end
         xmax = 3.0u"m",
         npoints = 100,
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_1d_2 = create_tabulation_1D(
@@ -245,7 +259,8 @@ end
         collect(range(0,3,length=100))*u"m",
         custom_name = "1d_3",
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_1d_4 = create_tabulation_1D(
@@ -273,7 +288,8 @@ end
         xmax = 3.0u"m",
         npoints = 100,
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_1d_2 = create_tabulation_1D(
@@ -291,7 +307,8 @@ end
         collect(range(0,3,length=100))*u"m",
         custom_name = "1d_3",
         x_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_1d_4 = create_tabulation_1D(
@@ -331,7 +348,9 @@ end
         npoints_y = 200,
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1),
+        metadata_validation_fn = metadata_validation_fn
     )
 
     itp_2d_2 = create_tabulation_2D(
@@ -358,7 +377,8 @@ end
         jld_base_path = "interpolations",
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_2d_4 = create_tabulation_2D(
@@ -391,7 +411,9 @@ end
         npoints_y = 200,
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1),
+        metadata_validation_fn = metadata_validation_fn
     )
 
     itp_2d_2 = create_tabulation_2D(
@@ -418,7 +440,8 @@ end
         jld_base_path = "interpolations",
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_2d_4 = create_tabulation_2D(
@@ -462,7 +485,9 @@ end
         npoints_y = 200,
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1),
+        metadata_validation_fn = metadata_validation_fn
     )
 
     itp_2d_2 = create_tabulation_2D(
@@ -486,7 +511,8 @@ end
         custom_name = "2d_3",
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_2d_4 = create_tabulation_2D(
@@ -518,7 +544,9 @@ end
         npoints_y = 200,
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1),
+        metadata_validation_fn = metadata_validation_fn
     )
 
     itp_2d_2 = create_tabulation_2D(
@@ -541,7 +569,8 @@ end
         custom_name = "2d_3",
         x_scale = :linear,
         y_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_2d_4 = create_tabulation_2D(
@@ -584,7 +613,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_3d_2 = create_tabulation_3D(
@@ -617,7 +647,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_3d_4 = create_tabulation_3D(
@@ -655,7 +686,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_3d_2 = create_tabulation_3D(
@@ -675,7 +707,8 @@ end
         x_scale = :log10,
         y_scale = :log10,
         z_scale = :log10,
-        f_scale = :log10
+        f_scale = :log10,
+        metadata = Dict{String, Any}("a"=>1)
     )
     itp_3d_3 = create_tabulation_3D(
         func_3d,
@@ -736,7 +769,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_3d_2 = create_tabulation_3D(
@@ -766,7 +800,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
     itp_3d_4 = create_tabulation_3D(
         func_3d,
@@ -803,7 +838,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
 
     itp_3d_2 = create_tabulation_3D(
@@ -833,7 +869,8 @@ end
         x_scale = :linear,
         y_scale = :linear,
         z_scale = :linear,
-        f_scale = :linear
+        f_scale = :linear,
+        metadata = Dict{String, Any}("a"=>1)
     )
     itp_3d_4 = create_tabulation_3D(
         func_3d,
