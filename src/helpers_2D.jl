@@ -58,9 +58,9 @@ function _get_interp_fn_2D(x, y, data_matrix, x_scale, y_scale, f_scale, x_units
     f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     elseif interpolation_type == :cubic
-        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     else
         throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
     end

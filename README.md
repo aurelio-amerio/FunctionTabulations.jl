@@ -139,6 +139,39 @@ itp_1d_1 = create_tabulation_1D(
 
 isapprox(itp_1d_1(2.0), func_1d(2.0, 2; b=1), rtol = 1e-3)
 ```
+## Storing metadata
+It is possible to store some metadata in the tabulation archive, by specifying the `metadata` keyword argument. `metadata` has to be provided in the form of a `Dict{String, Any}`. By default, when loading a tabulation, if some metadata is provided it will be compared against the stored metadata through the equality `metadata == stored_metadata`. In case more articulated metadata validation is required, it is possible to pass a `validate_metadata_fn` function, which will be responsible of metadata validation.
+
+```julia
+func_1d(x) = sin(x)
+
+function metadata_validation_fn(metadata, loaded_metadata)
+    return metadata["a"] == loaded_metadata["a"]
+end
+
+itp_1d_1 = create_tabulation_1D(
+    func_1d,
+    xmin = 0.0,
+    xmax = 3.0,
+    npoints = 100,
+    x_scale = :linear,
+    f_scale = :linear,
+    metadata = Dict{String, Any}("a"=>1),
+    metadata_validation_fn = metadata_validation_fn
+) # create the tabulation
+
+itp_1d_1_loaded = create_tabulation_1D(
+    func_1d,
+    xmin = 0.0,
+    xmax = 3.0,
+    npoints = 100,
+    x_scale = :linear,
+    f_scale = :linear,
+    metadata = Dict{String, Any}("a"=>1),
+    metadata_validation_fn = metadata_validation_fn
+) # reload the tabulation
+```
+While the library used for storing the tabulations (JLD2) should be able to serialise any dictionary passed as metadata, it is up to the user to properly create and validate the metadata.
 
 # Usage: 2D FunctionTabulations & 3D FunctionTabulations
 2D FunctionTabulations and 3D FunctionTabulations have a similar syntax, with extra parameters for the `y` and `z` variables:

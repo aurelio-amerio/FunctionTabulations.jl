@@ -48,14 +48,14 @@ function _get_interp_fn_1D(x, data_matrix, x_scale, f_scale, x_units, f_units, i
     if f_scale == :log10
         data_matrix[data_matrix.<=1e-300] .= 1e-300
     end
-    
+
     knots = (x,)
     f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     elseif interpolation_type == :cubic
-        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc = extrapolation_bc())
+        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     else
         throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
     end
