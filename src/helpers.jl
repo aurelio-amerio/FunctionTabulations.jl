@@ -172,11 +172,11 @@ function get_metadata(filepath)
     return data["metadata"]
 end
 
-function check_metadata(metadata, loaded_metadata, metadata_validation_fn::Union{Function, Nothing}=nothing)   
+function check_metadata(metadata, loaded_metadata, metadata_validation_fn::Union{Function,Nothing}=nothing)
     if metadata_validation_fn === nothing
         return metadata == loaded_metadata
     else
         return metadata_validation_fn(metadata, loaded_metadata)
     end
 end
-    
+

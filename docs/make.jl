@@ -5,15 +5,15 @@ DocMeta.setdocmeta!(FunctionTabulations, :DocTestSetup, :(using FunctionTabulati
 
 makedocs(;
     modules=[FunctionTabulations],
-    authors="Aurelio Amerio <aurelio.amerio@edu.unito.it> and contributors",
+    authors="Aurelio Amerio <aurelio.amerio@ific.uv.es> and contributors",
     repo="https://github.com/aurelio-amerio/FunctionTabulations.jl/blob/{commit}{path}#{line}",
     sitename="FunctionTabulations.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        assets=String[],
+        assets=String[]
     ),
     pages=[
         "Home" => "index.md",
         "List of functions" => "functions.md",
-    ],
+    ]
 )
