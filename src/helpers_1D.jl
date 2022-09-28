@@ -53,7 +53,7 @@ function _get_interp_fn_1D(x, data_matrix, x_scale, f_scale, x_units, f_units, i
     f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
+        itp = linear_interpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     elseif interpolation_type == :cubic
         itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     else

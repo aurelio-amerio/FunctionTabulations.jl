@@ -1,6 +1,7 @@
 module FunctionTabulations
 using Interpolations
 using JLD2
+using CodecZlib
 using ProgressMeter
 using Unitful
 using Unitful: FreeUnits
@@ -179,7 +180,7 @@ end
         kwargs...
         ) where {T<:Union{Real,Quantity}}
 
-Provides an interface for `create_tabulation_1D` where the tabulation points are defined by the Vector `x`. Only `LinearInterpolation` is supported.`
+Provides an interface for `create_tabulation_1D` where the tabulation points are defined by the Vector `x`. Only `linear_interpolation` is supported.`
 """
 function create_tabulation_1D(
     func::Function,
@@ -432,7 +433,7 @@ end
         kwargs...
     ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity}}
 
-Provides an interface for `create_tabulation_2D` where the tabulation points are defined by the Vectors `x` and `y`. Only `LinearInterpolation` is supported.`
+Provides an interface for `create_tabulation_2D` where the tabulation points are defined by the Vectors `x` and `y`. Only `linear_interpolation` is supported.`
 """
 function create_tabulation_2D(
     func::Function,
@@ -729,7 +730,7 @@ end
         kwargs...
     ) where {T<:Union{Real,Quantity},V<:Union{Real,Quantity},W<:Union{Real,Quantity}}
 
-Provides an interface for `create_tabulation_3D` where the tabulation points are defined by the Vectors `x`, `y` and `z`. Only `LinearInterpolation` is supported.`
+Provides an interface for `create_tabulation_3D` where the tabulation points are defined by the Vectors `x`, `y` and `z`. Only `linear_interpolation` is supported.`
 """
 function create_tabulation_3D(
     func::Function,

@@ -64,7 +64,7 @@ function _get_interp_fn_3D(x, y, z, data_matrix, x_scale, y_scale, z_scale, f_sc
     f_matrix = scaler.(data_matrix, f_scale)
 
     if interpolation_type == :linear
-        itp = LinearInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
+        itp = linear_interpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     elseif interpolation_type == :cubic
         itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     else
