@@ -1,7 +1,7 @@
 module FunctionTabulations
 using Interpolations
-using JLD2
 using CodecZlib
+using JLD2
 using ProgressMeter
 using Unitful
 using Unitful: FreeUnits

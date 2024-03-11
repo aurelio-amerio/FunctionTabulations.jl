@@ -66,7 +66,7 @@ function _get_interp_fn_3D(x, y, z, data_matrix, x_scale, y_scale, z_scale, f_sc
     if interpolation_type == :linear
         itp = linear_interpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     elseif interpolation_type == :cubic
-        itp = CubicSplineInterpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
+        itp = cubic_spline_interpolation(knots, f_matrix, extrapolation_bc=extrapolation_bc())
     else
         throw(ArgumentError("$interpolation_type is not a valid interpolation type"))
     end
